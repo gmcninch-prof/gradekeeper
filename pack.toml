@@ -1,0 +1,10 @@
+[custom.all.gradekeeper-idris]
+type = "local"
+path = "."
+ipkg = "gradekeeper-idris.ipkg"
+test = "test/test.ipkg"
+
+[custom.all.gradekeeper-idris-test]
+type = "local"
+path = "test"
+ipkg = "test.ipkg"
