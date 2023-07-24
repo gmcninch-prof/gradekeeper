@@ -5,13 +5,23 @@ import JSON.Derive
 
 %language ElabReflection
 
-export 
+
+untaggedOptions : Options
+untaggedOptions = { sum := UntaggedValue
+                  , constructorTagModifier := toLower } defaultOptions
+
+singleOptions : Options
+singleOptions = { sum := ObjectWithSingleField
+                , constructorTagModifier := toLower } defaultOptions
+
+
+public export 
 data Grade : Type where
   MkGrade : (label : String) -> (min : Double) -> Grade
   Failing : Grade
   Unassigned : Grade
 
-%runElab derive "Grade" [ Show, Eq, ToJSON, FromJSON ]
+%runElab derive "Grade" [ Show, Eq, customToJSON untaggedOptions, customFromJSON untaggedOptions ]
 
 implementation Show Grade where
   show (MkGrade label min) = label
@@ -45,7 +55,7 @@ letterGrades = [ MkGrade "A+" 98.0
               
 
 export               
-computeGrade : (letterGrades : List Grade) -> (score : Double) -> Grade
+computeGrade : (letterGrades : List Grade) -> (score : Double) -> String
 computeGrade letterGrades score = computeGrade' descendingLetterGrades score
   where
 
@@ -55,12 +65,12 @@ computeGrade letterGrades score = computeGrade' descendingLetterGrades score
     descendingLetterGrades : List Grade
     descendingLetterGrades = sortBy rev letterGrades
     
-    computeGrade' :  (letterGrades : List Grade) -> (score : Double) -> Grade
-    computeGrade' [] score  = Failing
+    computeGrade' :  (letterGrades : List Grade) -> (score : Double) -> String
+    computeGrade' [] score  = show Failing
     computeGrade' (x :: xs) score = case x of
-      t@(MkGrade _ min) => if score >= min then t else computeGrade' xs score 
-      Failing => Failing
-      Unassigned => Unassigned
+      t@(MkGrade _ min) => if score >= min then show t else computeGrade' xs score 
+      Failing => show Failing
+      Unassigned => show Unassigned
 
 
 export
@@ -68,7 +78,7 @@ countGrades : (letterGrades : List Grade) -> (grade : Grade) -> (scores : List D
 countGrades letterGrades grade scores = List.length matches
   where
     gradeMatch : Double -> Bool
-    gradeMatch score = grade == computeGrade letterGrades score
+    gradeMatch score = show grade == computeGrade letterGrades score
 
     matches : List Double
     matches = filter gradeMatch scores
