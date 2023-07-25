@@ -67,6 +67,7 @@ average dbls = (1/len)*sum dbls
     len : Double
     len = cast $ length dbls
 
+export
 dropAndAverage : (num:Nat) -> List Double -> Double
 dropAndAverage num dbls = average pruned
   where
@@ -132,6 +133,7 @@ componentScore course student (Min compName labels weight) = do
     ress : Maybe (List Double)
     ress = traverse (getOutcomeByLabel course student) labels
 
+export
 dotProduct : Vect n Double -> Vect n Double -> Double
 dotProduct xs ys = sum $ zipWith (*) xs ys
 
