@@ -37,10 +37,10 @@ data MDPar : Type where
   Normal : List MDText -> MDPar
   Pre : String -> MDPar
   Quote : List MDText -> MDPar
-  ListItem : { header : List MDText} -> { contents : List MDPar } -> MDPar
-  CodeBlock : { lang : String } -> { contents : List MDPar } -> MDPar
-  Section : { header : List MDText } -> { contents : List MDPar} -> MDPar 
-  Table : { header : List MDText } -> { contents : List (List TableContents) } -> MDPar
+  ListItem : ( header : List MDText) -> ( contents : List MDPar ) -> MDPar
+  CodeBlock : ( lang : String ) -> ( contents : List String ) -> MDPar
+  Section : ( header : List MDText ) -> ( contents : List MDPar) -> MDPar 
+  Table : ( header : List MDText ) -> ( contents : List (List TableContents) ) -> MDPar
 
 record MD where
   constructor MkMD
@@ -71,78 +71,83 @@ renderText (Image (MkImgRef target alt)) = "![" ++ alt ++ "](" ++ target ++ ")"
 renderTextList : List MDText -> String
 renderTextList lt = joinBy " " $ renderText <$> lt
 
-renderPar : Nat -> Nat -> MDPar -> String        
-renderPar _ pad (Normal xs) = multiIndent pad $ renderTextList xs
-renderPar _ pad (Pre str) = multiIndent (pad + 2) $ str
-renderPar _ pad (Quote xs) = ?renderPar_rhs_2
-renderPar lvl pad ListItem = ?renderPar_rhs_3
-renderPar lvl pad CodeBlock = ?renderPar_rhs_4
-renderPar lvl pad Section = ?renderPar_rhs_5
-renderPar lvl pad Table = ?renderPar_rhs_6
-
-
--- renderPar _ pad (Quote xt) =
---   pad
---     <> "> "
---     <> renderTextList xt
-
--- renderPar n pad (ListItem { header, contents }) =
---   joinWith "\n"
---     $ (:)
---         (pad <> "- " <> renderTextList header)
---         (renderPar n (pad <> "  ") <$> contents)
-
--- renderPar _ pad (CodeBlock { lang, contents }) =
---   indent pad
---     $ joinWith "\n"
---     $ ("``` " <> lang)
---     : contents
---     <> "```"
---     : Nil
-
--- renderPar n _ (Section { header, contents }) =
---   joinWith "\n"
---     $ (:)
---         ((repeat n "#") <> " " <> renderTextList header)
---         (renderPar (n + 1) (repeat (n + 1) " ") <$> contents)
-
--- renderPar _ pad (Table { header, contents }) =
-  
---   indent pad $ Fold.intercalate "\n" $ headline:headsep:Nil <>  (dataline <$> contents)
---   where
---   getWidths :: List Int -> List TableContents -> List Int
---   getWidths old cl =
---     let new = String.length <$> display <$> cl in
---       (\(Tuple x y) -> max x y) <$> zip new old
+renderPar : Nat -> MDPar -> String        
+renderPar pad (Normal xs) = multiIndent pad $ renderTextList xs
+renderPar pad (Pre str) = multiIndent (pad + 2) $ str
+renderPar pad (Quote xs) = multiIndent pad ("> " ++ renderTextList xs)
+renderPar pad (ListItem header contents) = 
+  joinBy "\n" $ the (List String) (hd::rest)
+  where
+    hd : String
+    hd = indent pad ("- " ++ renderTextList header)
     
+    rest : List String
+    rest = renderPar (pad + 2) <$> contents
 
---   headerWidth :: Text -> Int
---   headerWidth (Text a)  = String.length a
---   headerWidth (Bold a) = 4 + String.length a
---   headerWidth (Emph a) = 2 + String.length a
---   headerWidth (Struck a) = 2 + (Fold.foldl (\i t -> i+headerWidth t) 0 a)
---   headerWidth (Code a) = 2 + String.length a
---   headerWidth (Link href) = String.length href.target + String.length href.desc + 4
---   headerWidth (Image href) = String.length href.target + String.length href.alt + 4  
+renderPar pad (CodeBlock lang contents) = 
+  indent pad $ joinBy "\n" $ the (List String) ( [top] <+> contents <+> [bot] )
+  where
+    top : String
+    top = "``` " ++ lang
+    
+    bot : String
+    bot = "```"
+renderPar pad (Section header contents) = 
+  joinBy "\n" $ the (List String) (hd::rest)
+  where
+    hd : String
+    hd = (replicate pad '#') ++ " " ++ renderTextList header
+    
+    rest : List String
+    rest = renderPar (pad+1) <$> contents
+    
+renderPar pad (Table header contents) = ?renderPar_rhs_6
+--   indent pad $ Fold.intercalate "\n" $ headline:headsep:Nil <>  (dataline <$> contents)
+  where
+    getWidths : List Nat -> List TableContents -> List Nat 
+    getWidths old cl = let new = String.length <$> show <$> cl in
+      (\(x,y) => max x y) <$> zip new old
+  
+    headerWidth : MDText -> Nat  
+    headerWidth (Text str) = String.length str
+    headerWidth (Emph str) = 2 + String.length str
+    headerWidth (Bold str) = 4 + String.length str
+    headerWidth (Struck xs) = 2 + (foldl (\i,t => i + headerWidth t) 0 xs)
+    headerWidth (Code str) = 2 + String.length str
+    headerWidth (Link (MkHRef target desc)) = String.length target + String.length desc + 4
+    headerWidth (Image (MkImgRef target alt)) = String.length target + String.length alt + 4
+
+    numColumns : Nat
+    numColumns = List.length header
+
+    widths : List Nat
+    widths = foldl getWidths (headerWidth <$> header) contents
+    
+    vert : String
+    vert = "|"
+    
+    hori : String
+    hori = "-"
+
+
+    headline = String.joinBy ""
+             [ vert
+             , " "
+             , intercalate (" " ++ vert ++ " ") $ (\(Tuple w h) => SU.padEnd w $ renderText h) <$>
+                (zip widths header)
+             , " "
+             , vert]
+
 
 --   zeros :: Int -> List Int
 --   zeros m | m>0 = 0:(zeros (m-1))
 --   zeros _ = Nil
 
---   numColumns = length header
+
                   
---   widths = Fold.foldl getWidths (headerWidth <$> header) contents
 
---   vert = "|"
---   hori = "-"
 
---   headline = String.joinWith ""
---              [ vert
---              , " "
---              , Fold.intercalate (" " <> vert <> " ") $ (\(Tuple w h) -> SU.padEnd w $ renderText h) <$>
---                 (zip widths header)
---              , " "
---              , vert]
+
 
 --   headsep = String.joinWith ""
 --             [ vert
