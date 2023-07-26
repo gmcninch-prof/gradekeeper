@@ -41,19 +41,21 @@ public export
 record StudentSISData where
   constructor MkStudentSISData
   name    : String
+  id      : String
   section : String
   outcomes : List Outcome
 
 %runElab derive "StudentSISData" [Show, Eq, ToJSON, FromJSON]
 
-export
+public export
 record StudentResult where
   constructor MkStudentResult
   name    : String
+  id      : String
   section : String
   courseScore : Double
   grade       : String
-
+  outcomes    : List Outcome
 
 %runElab derive "StudentResult" [Show, Eq, ToJSON, FromJSON]
 
@@ -171,40 +173,14 @@ result course student = do
 
   let grade = computeGrade lg score
   pure $ MkStudentResult { name = student.name
+                         , id = student.id
                          , section = student.section
                          , courseScore = score
                          , grade = grade
+                         , outcomes = student.outcomes
                          }
 
-export
-report : (course:Course) -> (student:StudentSISData) -> String
-report course student = 
-  case r of
-       Nothing => a ++ " -- error"
-       (Just x) => a ++ ", " ++ (joinBy ", "  (show <$> x))
-  where
-    rr : Maybe StudentResult
-    rr = result course student
-  
-    a : String
-    a = case rr of
-             Nothing => student.name ++ " - no reported scored: "
-             (Just x) => joinBy ", " [ x.name
-                                      , x.grade
-                                      , show x.courseScore
-                                      ]
-  
-    r : Maybe (List Double)
-    r = traverse (getOutcomeByLabel course student) (label <$> student.outcomes)
 
-
-
-summarizeGrades : (letterGrades : List Grade) -> (results : List StudentResult) -> List ( Grade, Nat )
-summarizeGrades letterGrades results = summarizeGrade' <$> letterGrades
-  where
-    summarizeGrade' : Grade -> ( Grade, Nat )
-    summarizeGrade' grade = 
-      (grade, countGrades letterGrades grade (courseScore <$> results))
 
 
 

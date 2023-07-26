@@ -54,13 +54,12 @@ data Semester : Type where
   Fall : Semester
   Spring : Semester
 
+
 public export
 record AY where
   constructor MkAY 
   ay : Nat
 
-implementation Show AY where
-  show x = show x.ay ++ "-" ++ show (x.ay + 1)
 
 public export
 record AcademicSemester where
@@ -68,19 +67,32 @@ record AcademicSemester where
   ay : AY
   semester : Semester
 
+
+implementation Show AY where
+  show x = show x.ay ++ "-" ++ show (x.ay + 1)
+
+
 %runElab derive "AY" [Eq,ToJSON,FromJSON]
 %runElab derive "Semester" [Show, Eq, ToJSON, FromJSON]  
-%runElab derive "AcademicSemester" [Show, Eq, ToJSON, FromJSON]  
+%runElab derive "AcademicSemester" [Eq, ToJSON, FromJSON]  
+
+public export
+implementation Show AcademicSemester where
+  show ac = show ac.ay ++ " " ++ show ac.semester
+
 
 public export
 record Course where
   constructor MkCourse
   title   : String
+  instructors : List String
   semester : AcademicSemester
   strategies : List ComputeStrategy
   formulas   : List Formula
   sections : List Section
   grades : Maybe (List Grade)
+  dataDir : String
+  SISFile: String
 
 %runElab derive "Course" [Show, Eq, ToJSON, FromJSON]
 
