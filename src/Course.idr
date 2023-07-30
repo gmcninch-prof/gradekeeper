@@ -39,6 +39,18 @@ data ScoreComponent : Type where
   Max  : (compName : String) -> (labels : List String) -> (weight:Double) -> ScoreComponent
   Min  : (compName : String) -> (labels : List String) -> (weight:Double) -> ScoreComponent
 
+public export
+componentId : ScoreComponent -> String
+componentId (Copy compName _ _) = compName
+componentId (Max compName _ _) = compName
+componentId (Min compName _ _) = compName
+
+public export
+componentWeight : ScoreComponent -> Double
+componentWeight (Copy _ _ weight) = weight
+componentWeight (Max _ _ weight) = weight
+componentWeight (Min _ _ weight) = weight
+
 %runElab derive "ScoreComponent" [ Show, Eq, customToJSON singleOptions, customFromJSON singleOptions ]
 
 public export
@@ -78,7 +90,7 @@ implementation Show AY where
 
 public export
 implementation Show AcademicSemester where
-  show ac = show ac.ay ++ " " ++ show ac.semester
+  show ac = show ac.ay ++ "-" ++ show ac.semester
 
 
 public export
@@ -92,7 +104,12 @@ record Course where
   sections : List Section
   grades : Maybe (List Grade)
   dataDir : String
-  SISFile: String
+  CanvasJSONFile: String
 
 %runElab derive "Course" [Show, Eq, ToJSON, FromJSON]
 
+
+export
+reportFileName : Course -> String
+reportFileName course = 
+  String.joinBy "/" [course.dataDir, course.title ++ "-" ++ show course.semester ++ ".md"]

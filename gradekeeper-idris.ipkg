@@ -25,10 +25,10 @@ depends    = base         >= 0.5.1
 -- modules =
 
 -- main file (i.e. file to load at REPL)
-main = Process
+main = App
 
 -- name of executable
-executable = "gradekeeper-idris"
+executable = "gradekeeper"
 -- opts =
 sourcedir = "src"
 -- builddir =

@@ -2,8 +2,11 @@ module MD
 import Derive.Prelude
 import Data.Vect
 
+import System.File.ReadWrite
+
 %language ElabReflection
 
+public export
 record HRef where
   constructor MkHRef
   target : String
@@ -11,6 +14,7 @@ record HRef where
 
 %runElab derive "HRef" [ Show, Eq ]
 
+public export
 record ImgRef where
   constructor MkImgRef
   target : String
@@ -48,8 +52,8 @@ data MDPar : Type where
   Quote : List MDText -> MDPar
   ListItem : ( header : List MDText) -> ( contents : List MDPar ) -> MDPar
   CodeBlock : ( lang : String ) -> ( contents : List String ) -> MDPar
-  Section : ( header : List MDText ) -> ( contents : List MDPar) -> MDPar 
-  Table : { ncols : Nat} -> ( header : Vect ncols MDText ) -> ( contents : List (Vect ncols TableContents) ) -> MDPar
+  Section : ( header : List MDText ) -> ( contents : List MDPar) -> (id : Maybe String) -> MDPar 
+  Table : { ncols : Nat} -> ( header : Vect ncols MDText ) -> ( contents : List (Vect ncols MDText) ) -> MDPar
 
 public export 
 record MD where
@@ -58,6 +62,7 @@ record MD where
   title : Maybe String
   author : Maybe String
   content : List MDPar
+  fileName : String
   
 
 multiIndent : Nat -> String -> String
@@ -91,7 +96,7 @@ renderPar pad (Normal xs) = multiIndent pad $ renderTextList xs
 renderPar pad (Pre str) = multiIndent (pad + 2) $ str
 renderPar pad (Quote xs) = multiIndent pad ("> " ++ renderTextList xs)
 renderPar pad (ListItem header contents) = 
-  joinBy "\n" $ the (List String) (hd::rest)
+  joinBy "\n" $ the (List String) $ (hd::rest) <+> [ "\n"]
   where
     hd : String
     hd = indent pad ("- " ++ renderTextList header)
@@ -107,20 +112,20 @@ renderPar pad (CodeBlock lang contents) =
     
     bot : String
     bot = "```"
-renderPar pad (Section header contents) = 
+renderPar pad (Section header contents id) = 
   joinBy "\n" $ the (List String) (hd::rest)
   where
     hd : String
-    hd = (replicate pad '#') ++ " " ++ renderTextList header
+    hd = (replicate pad '#') ++ " " ++ renderTextList header ++ maybe "" (\id => " {#" ++ id ++ "}") id
     
     rest : List String
-    rest = renderPar (pad+1) <$> contents
+    rest = (renderPar (pad+1) <$> contents) <+> [""]
     
 renderPar pad (Table {ncols} header contents) = 
-  multiIndent pad $ String.joinBy "\n" $ headline::headsep::(dataline <$> contents)
+  multiIndent pad $ String.joinBy "\n" $ ""::headline::headsep::(dataline <$> contents)
   where
-    getWidths : Vect ncols Nat -> Vect ncols TableContents -> Vect ncols Nat 
-    getWidths old cl = let new = String.length <$> renderTC <$> cl in
+    getWidths : Vect ncols Nat -> Vect ncols MDText -> Vect ncols Nat 
+    getWidths old cl = let new = String.length <$> renderText <$> cl in
       (\(x,y) => max x y) <$> zip new old
   
     headerWidth : MDText -> Nat  
@@ -163,12 +168,12 @@ renderPar pad (Table {ncols} header contents) =
               ]
 
 
-    dataline : Vect ncols TableContents -> String
+    dataline : Vect ncols MDText -> String
     dataline ltc =
       String.joinBy ""
       [ vert
       , " "
-      , String.joinBy (" " ++ vert ++ " ") $ toList $ (\(w, s) => String.padRight w ' ' $ renderTC s) <$> (zip widths ltc)
+      , String.joinBy (" " ++ vert ++ " ") $ toList $ (\(w, s) => String.padRight w ' ' $ renderText s) <$> (zip widths ltc)
       , " "
       , vert
       ]
@@ -182,7 +187,7 @@ renderPars (x :: xs) = joinBy "\n" $ (renderPar 1 x) :: (renderPars xs) :: Nil
 
 public export 
 render : MD -> String
-render (MkMD date title author content) = 
+render (MkMD date title author content _) = 
   meta <+> renderPars content
   where
     meta : String
@@ -196,3 +201,7 @@ render (MkMD date title author content) =
                 ]
   
 
+public export
+writeMD : MD -> IO (Either FileError ())
+writeMD t@(MkMD _ _ _ _ fileName) = 
+  writeFile fileName $ render t

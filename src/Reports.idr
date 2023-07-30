@@ -5,7 +5,7 @@ import Student
 import Course
 import Data.Vect
 import LetterGrades
-
+import Stats
 
 infixr 5 ^
 
@@ -37,28 +37,146 @@ summarizeGrades letterGrades results = summarizeGrade' <$> letterGrades
       (grade, countGrades letterGrades grade (courseScore <$> results))
 
 
+studentReport : ( course: Course) -> ( student : StudentResult) -> MDPar
+studentReport course student = 
+  Section { header = [ Text student.name ]
+          , contents = info
+                       <+> [ outcomes ] 
+                       <+>  formulas 
+                       <+>  grades
+                       <+> [ Normal [ Link $ MkHRef "#top" "return to the top of the report"] ]
+          , id = Just student.id
+          }
+
+  where 
+    info : List MDPar
+    info = [ ListItem { header = [ Text $ "level: " ++ fromMaybe "" student.level], contents = []}
+           , ListItem { header = [ Text $ "majors: " ++ fromMaybe "" student.majors], contents = []}
+           , ListItem { header = [ Text $ "school: " ++ fromMaybe "" student.majors], contents = []}           
+           ]
+  
+    contents : List (Vect 2 MDText)
+    contents = (\out => Text <$> 
+      [ out.label 
+      , maybe "--" (show . round 2) $ getOutcomeByLabel course student.outcomes out.label ] ) 
+      <$> 
+      student.outcomes
+    
+    outcomes : MDPar
+    outcomes = Table { header = Bold <$> [ "Item", "Score" ] 
+                     , contents = contents 
+                     }
+  
+    cscore : ScoreComponent -> Maybe Double
+    cscore comp = componentScore course student.outcomes comp
+  
+    formula : Formula -> MDPar
+    formula f = 
+      let formulaBody : List (Vect 4 MDText)
+          formulaBody = (\comp => [ Text $ componentId comp
+                                  , Text $ show $ componentWeight comp
+                                  , Text $ maybe "--" (show . round 2) $ cscore comp 
+                                  , Text $ maybe "--" (show . round 2 . (* componentWeight comp)) $ cscore comp
+                                  ]) 
+                                  <$> f.formula 
+                                  
+          formulaSummary : Vect 4 MDText
+          formulaSummary = [ Text "", Text "", Text ""
+                           , Text $ maybe "--" (show . round 2) $ scoreForFormula course student.outcomes f
+                           ]
+      in
+      Section { header = [ Text f.id ]
+              , contents = [ Table { header = Bold <$> [ "component", "weight", "score", "" ] 
+                                                       , contents = formulaBody <+> [ formulaSummary ]
+                                   }
+                           ]
+              , id = Nothing
+              }
+
+    formulas  : List MDPar
+    formulas = formula <$> course.formulas 
+   
+    grades : List MDPar
+    grades = [ ListItem [ Bold "Score: " , Text $ (show . round 2 ) student.courseScore ] []
+             , ListItem [ Bold "Grade: " , Text student.grade ] []
+             ]
+
+statsReport : (course: Course) -> (students : List StudentResult) -> MDPar            
+statsReport course students = 
+  Section { header = [ Text "Statistics" ] 
+          , contents = [ ListItem { header = [ Text "Levels"], contents =[ levelTable ] }
+                       , ListItem { header = [ Text "School"], contents = [ schoolTable ] }
+                       , ListItem { header = [ Text "Score statistics" ]
+                                  , contents = [ classMedian
+                                               , classMean
+                                               ]
+                                  }
+                       , ListItem { header = [ Text "Grades"], contents = [ gradeTable ] }  
+                       ]
+          , id = Just "statistics"
+          }           
+  where
+    classMedian : MDPar
+    classMedian = ListItem { header = [ Text $ "median: " ++ show m ]
+                           , contents = []
+                           }
+      where
+        m : Maybe Double
+        m = map (round 2) (median $ .courseScore <$> students)
+
+    classMean : MDPar
+    classMean = ListItem { header = [ Text $ "mean: " ++ show  m ]
+                           , contents = []
+                           }
+      where
+        m : Double
+        m = round 2 $ mean $ .courseScore <$> students  
+      
+    levelTable : MDPar
+    levelTable = Table { header = [ Text "Level", Text "#" ]
+                       , contents = (\class => Text <$> [ class, show $ (countPred (studentClass class) students)])
+                                    <$> [ "First Year", "Sophomore", "Junior", "Senior" ]
+                       }
+
+
+    schoolTable : MDPar
+    schoolTable = Table { header = [ Text "Schools & Majors", Text "#" ]
+                        , contents = [ [ Text "A&S", Text $ show $ countPred artsSciences students ]
+                                     , [ Text "SoE", Text $ show $ countPred engineer students ]
+                                     , [ Text "Math Majors/minors", Text $ show $ countPred mathMajor students ]
+                                     ]
+                       }
+
+
+    gradeTable : MDPar
+    gradeTable = Table { header = [ Text "Grade", Text "#" ]
+                       , contents = (\grade => Text <$> [ grade, show $ (countPred (gradeMatch grade) students)])
+                                    <$> [ "A", "B", "C", "D", "F" ]
+                       }
+
+
 public export 
 mkCourseReport : (course : Course) -> (students : List StudentResult) -> MD
 mkCourseReport course students = 
   MkMD { date = Nothing
-       , title = Nothing
+       , title = Just $ course.title ++ " " ++ show course.semester
        , author = Nothing
-       , content = [ section ]
+       , content = [ section , statsReport course students] <+> studentSections
+       , fileName = reportFileName course
        }
   where
     headers : Vect 4 MDText
     headers = Bold <$> [ "Name", "Id", "Score", "Grade" ]
   
-    initItems : (student : StudentResult) -> Vect 4 TableContents
+    initItems : (student : StudentResult) -> Vect 4 MDText
     initItems student = 
-    CString <$> [ student.name
-                , student.id
-                , (show . round 2) student.courseScore
-                , student.grade
-                ]
-    
+      [ Link $ MkHRef {target = "#" ++ student.id, desc = student.name }
+      , Text student.id
+      , Text $ (show . round 2) student.courseScore
+      , Text student.grade
+      ]
   
-    contents : List (Vect 4 TableContents)
+    contents : List (Vect 4 MDText)
     contents = initItems <$> students
   
     table : MDPar
@@ -71,4 +189,8 @@ mkCourseReport course students =
                        , contents = [ table
                                     , Normal [ Text "\\newpage" ]
                                     ]
+                       , id = Just "top"
                        }
+
+    studentSections : List MDPar
+    studentSections = studentReport course <$>  students

@@ -10,7 +10,7 @@ import Reports
 
 %language ElabReflection
 
-decodefile : Show a => FromJSON a => String -> IO (Either String a)
+decodefile : FromJSON a => String -> IO (Either String a)
 decodefile filename = do 
   result <- readFile filename
   case result of
@@ -24,19 +24,19 @@ decodefile filename = do
 dir : String
 dir = "/home/george/Prof-Teach/scores/"
 
-courseFile : String
-courseFile = String.joinBy "/" [ dir, "AY2021-2022--2022-sp--Math051.json" ]
+courseFiles : List String
+courseFiles = [ String.joinBy "/" [ dir, "AY2021-2022--2022-sp--Math051.json" ]
+              , String.joinBy "/" [ dir, "AY2021-2022--2022-sp--Math135.json" ]
+              , String.joinBy "/" [ dir, "AY2022-2023--2023-sp--Math135.json" ]
+              ]
 
-
-course : IO (Either String Course)
-course = decodefile courseFile
 
 explain : { a: Type} -> (msg : String) -> Maybe a -> Either String a
 explain msg Nothing = Left msg
 explain msg (Just x) = Right x
 
 
-computeResults : Course -> List StudentSISData -> Either String (List StudentResult)
+computeResults : Course -> List StudentData -> Either String (List StudentResult)
 computeResults course students = do
   explain errmsg $ traverse (result course) students
   
@@ -46,48 +46,56 @@ computeResults course students = do
 
 
 
-getData : (courseFileName : String) -> IO (Either String (Course,List StudentSISData))
-getData courseFileName = do
+econs : Either String a -> Either String (List a) -> Either String (List a)
+econs x ll =  do
+  xx <- x
+  lll <- ll
+  pure $ xx :: lll
+
+getCourses : List String -> IO (Either String (List Course))
+getCourses [] = pure $ Right []
+getCourses (x :: xs) = do
+  f <- the (Either String Course) <$> decodefile x
+  rest <- getCourses xs
+  pure $ econs f rest
+    
+
+getReportForCourse : Course -> List StudentData -> Either String MD
+getReportForCourse course students = do
+  results <- computeResults course students
+  pure $ mkCourseReport course results
+
+
+public export
+getReportByFile : (courseFileName : String) -> IO (Either String MD)
+getReportByFile courseFileName = do
   ce <- decodefile courseFileName
+  putStrLn $ "working on " ++ courseFileName
   case ce of
     Left err => pure $ Left err
     Right course => do
-      sle <- decodefile $ String.joinBy "/" [ course.dataDir, course.SISFile ]
+      sle <- decodefile $ String.joinBy "/" [ course.dataDir, course.CanvasJSONFile ]
       case sle of
         Left err => pure $ Left err
         Right sl => 
-            pure $ Right (course,sl)
+            pure $ getReportForCourse course sl
 
-
-getReport : Course -> List StudentSISData -> Either String String
-getReport course students = do
-  results <- computeResults course students
-  
-  let rpt : MD
-      rpt = mkCourseReport course results
-      
-  pure $ render rpt
 
 display : Either String String -> IO ()
 display (Left err) = putStrLn $ "Error: " ++ err
 display (Right content) = putStrLn content
 
+public export
+write : Either String MD -> IO ()
+write (Left err) = putStrLn $ "error: " ++ err
+write (Right md) = do
+  _ <- writeMD md
+  putStrLn $ "Wrote: " ++ fromMaybe "" md.title
 
-main : IO ()
-main = do 
-  dat  <- getData courseFile
-  case dat of
-    Left err => putStrLn err
-    Right (course,studentdata) =>
-      display $ getReport course studentdata
-      
-      
- -- c <- decodefile courseFile     
-  -- s <- decodefile $ String.joinBy "/" [ c.dataDir, c.SISFile ]
-
-  -- case report c s of
-  --   (Left err) => putStrLn err
-  --   (Right x) => putStrLn x
-    
+-- main : IO ()
+-- main = do 
+--   eReports <- traverse getReportByFile courseFiles
+--   traverse_ write eReports
+  
        
 

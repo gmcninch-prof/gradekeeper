@@ -38,14 +38,18 @@ record Outcome where
 
 
 public export
-record StudentSISData where
-  constructor MkStudentSISData
+record StudentData where
+  constructor MkStudentData
   name    : String
   id      : String
   section : String
+  email   : Maybe String
+  majors  : Maybe String
+  level   : Maybe String
+  school  : Maybe String
   outcomes : List Outcome
 
-%runElab derive "StudentSISData" [Show, Eq, ToJSON, FromJSON]
+%runElab derive "StudentData" [Show, Eq, ToJSON, FromJSON]
 
 public export
 record StudentResult where
@@ -53,6 +57,10 @@ record StudentResult where
   name    : String
   id      : String
   section : String
+  email   : Maybe String
+  majors  : Maybe String
+  level   : Maybe String  
+  school  : Maybe String  
   courseScore : Double
   grade       : String
   outcomes    : List Outcome
@@ -80,10 +88,10 @@ dropAndAverage num dbls = average pruned
     pruned = let (_,p) = splitAt num sorted in p
     
   
-outcomeScore : (course : Course) -> (outcome:Outcome) -> (avg:List Double -> Double) -> (student:StudentSISData) -> Double
-outcomeScore course outcome avg student = case outcome.value of
-                                             (Score score) => score
-                                             (ListScores scores) => avg scores
+outcomeScore : (course : Course) -> (outcome:Outcome) -> (avg:List Double -> Double) -> Double
+outcomeScore course outcome avg = case outcome.value of
+                                       (Score score) => score
+                                       (ListScores scores) => avg scores
 
 export
 maxL : Ord a => List a -> Maybe a
@@ -101,39 +109,41 @@ minL (x :: xs) = do
        Nothing => pure x
        (Just y) => pure $ min x y
 
-export
-getOutcomeByLabel : (course: Course) -> (student:StudentSISData) -> (label : String) -> Maybe Double
-getOutcomeByLabel course student label = do 
+public export
+getOutcomeByLabel : (course: Course) -> (outs : List Outcome) -> (label : String) -> Maybe Double
+getOutcomeByLabel course outs label = do 
   outcome <- lookup label studentOutcomes
   case lookup label courseStrategies of
        Nothing => 
-         Just $ outcomeScore course outcome average student
+         Just $ outcomeScore course outcome average
        (Just (MkComputeStrategy str Average)) => 
-         Just $ outcomeScore course outcome average student
+         Just $ outcomeScore course outcome average
        (Just (MkComputeStrategy str (DropAndAverage num))) => 
-         Just $ outcomeScore course outcome (dropAndAverage num) student
+         Just $ outcomeScore course outcome (dropAndAverage num)
   where
     studentOutcomes : SortedMap String Outcome
-    studentOutcomes = fromList $ map (\res => (res.label,res)) student.outcomes
+    studentOutcomes = fromList $ map (\res => (res.label,res)) outs
     
     courseStrategies : SortedMap String ComputeStrategy
     courseStrategies = fromList $ map (\strat => (strat.label,strat)) course.strategies
 
-componentScore : (course : Course) -> (student : StudentSISData) -> (component : ScoreComponent)  -> Maybe Double
-componentScore course student  (Copy compName label weight) = 
-  getOutcomeByLabel course student label 
-componentScore course student (Max compName labels weight) =  do
+
+export
+componentScore : (course : Course) -> (outcomes : List Outcome) -> (component : ScoreComponent)  -> Maybe Double
+componentScore course outcomes  (Copy compName label weight) = 
+  getOutcomeByLabel course outcomes label 
+componentScore course outcomes (Max compName labels weight) =  do
   r <- ress
   maxL r
   where
     ress : Maybe (List Double)
-    ress = traverse (getOutcomeByLabel course student) labels
-componentScore course student (Min compName labels weight) = do
+    ress = traverse (getOutcomeByLabel course outcomes) labels
+componentScore course outcomes (Min compName labels weight) = do
   r <- ress
   minL r
   where
     ress : Maybe (List Double)
-    ress = traverse (getOutcomeByLabel course student) labels
+    ress = traverse (getOutcomeByLabel course outcomes) labels
 
 export
 dotProduct : Vect n Double -> Vect n Double -> Double
@@ -141,8 +151,8 @@ dotProduct xs ys = sum $ zipWith (*) xs ys
 
 
 export
-scoreForFormula : (course : Course) -> (student : StudentSISData) -> Formula -> Maybe Double
-scoreForFormula course student (MkFormula id comps) = do
+scoreForFormula : (course : Course) -> (outcomes : List Outcome) -> Formula -> Maybe Double
+scoreForFormula course outcomes (MkFormula id comps) = do
   ss <- scores {comps}
   pure $ dotProduct weights ss
   where
@@ -153,7 +163,7 @@ scoreForFormula course student (MkFormula id comps) = do
 
     scores : {comps: List ScoreComponent} -> Maybe (Vect (length comps) Double)
     scores {comps} = do
-      traverse (componentScore course student) compsV
+      traverse (componentScore course outcomes) compsV
       where
         compsV : Vect (length comps) ScoreComponent
         compsV =fromList comps
@@ -163,9 +173,9 @@ scoreForFormula course student (MkFormula id comps) = do
     weights {comps} = getWt <$> fromList comps
 
 export
-result : (course:Course) -> (student:StudentSISData) -> Maybe StudentResult      
+result : (course:Course) -> (student:StudentData) -> Maybe StudentResult      
 result course student = do
-  results <- traverse (scoreForFormula course student) course.formulas
+  results <- traverse (scoreForFormula course student.outcomes) course.formulas
   score <- maxL results
   let lg = case course.grades of
                 Nothing => letterGrades
@@ -175,6 +185,10 @@ result course student = do
   pure $ MkStudentResult { name = student.name
                          , id = student.id
                          , section = student.section
+                         , email = student.email
+                         , majors = student.majors
+                         , level = student.level
+                         , school = student.school
                          , courseScore = score
                          , grade = grade
                          , outcomes = student.outcomes
