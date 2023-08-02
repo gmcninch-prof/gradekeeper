@@ -6,6 +6,10 @@ import LetterGrades
 
 %language ElabReflection
 
+untaggedOptions : Options
+untaggedOptions = { sum := UntaggedValue
+                  , constructorTagModifier := toLower } defaultOptions
+
   
 singleOptions : Options
 singleOptions = { sum := ObjectWithSingleField
@@ -33,24 +37,19 @@ record ComputeStrategy where
 %runElab derive "AvgMethod" [ Show, Eq, customToJSON singleOptions, customFromJSON singleOptions ]
 %runElab derive "ComputeStrategy" [ Show, Eq, ToJSON , FromJSON ]
 
-public export
-data ScoreComponent : Type where
-  Copy : (compName : String) -> (label  : String)      -> (weight:Double) -> ScoreComponent
-  Max  : (compName : String) -> (labels : List String) -> (weight:Double) -> ScoreComponent
-  Min  : (compName : String) -> (labels : List String) -> (weight:Double) -> ScoreComponent
+data CompLabel = Label String
+               | Labels (List String)
+
+%runElab derive "CompLabel" [ Show, Eq, customToJSON untaggedOptions, customFromJSON untaggedOptions]
 
 public export
-componentId : ScoreComponent -> String
-componentId (Copy compName _ _) = compName
-componentId (Max compName _ _) = compName
-componentId (Min compName _ _) = compName
-
-public export
-componentWeight : ScoreComponent -> Double
-componentWeight (Copy _ _ weight) = weight
-componentWeight (Max _ _ weight) = weight
-componentWeight (Min _ _ weight) = weight
-
+record ScoreComponent where
+  constructor MkScoreComponent
+  compName : String
+  lab : CompLabel
+  weight : Double
+  
+  
 %runElab derive "ScoreComponent" [ Show, Eq, customToJSON singleOptions, customFromJSON singleOptions ]
 
 public export
@@ -60,7 +59,6 @@ record Formula where
   formula :  List ScoreComponent
 
 %runElab derive "Formula" [Show, Eq, ToJSON, FromJSON]  
-
 public export
 data Semester : Type where
   Fall : Semester
