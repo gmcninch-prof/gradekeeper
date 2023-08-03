@@ -73,10 +73,10 @@ studentReport course student =
     formula : Formula -> MDPar
     formula f = 
       let formulaBody : List (Vect 4 MDText)
-          formulaBody = (\comp => [ Text $ componentId comp
-                                  , Text $ show $ componentWeight comp
+          formulaBody = (\comp => [ Text $ comp.compName
+                                  , Text $ show $ comp.weight
                                   , Text $ maybe "--" (show . round 2) $ cscore comp 
-                                  , Text $ maybe "--" (show . round 2 . (* componentWeight comp)) $ cscore comp
+                                  , Text $ maybe "--" (show . round 2 . (* comp.weight)) $ cscore comp
                                   ]) 
                                   <$> f.formula 
                                   

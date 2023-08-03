@@ -37,16 +37,18 @@ record ComputeStrategy where
 %runElab derive "AvgMethod" [ Show, Eq, customToJSON singleOptions, customFromJSON singleOptions ]
 %runElab derive "ComputeStrategy" [ Show, Eq, ToJSON , FromJSON ]
 
-data CompLabel = Label String
-               | Labels (List String)
-
-%runElab derive "CompLabel" [ Show, Eq, customToJSON untaggedOptions, customFromJSON untaggedOptions]
+public export
+data Computation = Copy String
+                 | Max (List String)
+                 | Min (List String)
+                 
+%runElab derive "Computation" [ Show, Eq, customToJSON singleOptions, customFromJSON singleOptions]
 
 public export
 record ScoreComponent where
   constructor MkScoreComponent
   compName : String
-  lab : CompLabel
+  computation: Computation
   weight : Double
   
   

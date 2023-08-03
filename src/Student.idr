@@ -130,26 +130,16 @@ getOutcomeByLabel course outs label = do
 
 export
 componentScore : (course : Course) -> (outcomes : List Outcome) -> (component : ScoreComponent)  -> Maybe Double
-componentScore course outcomes (MkScoreComponent compName lab weight) = 
-  case lab of
-       (Label str) => ?componentScore_rhs_1
-       (Labels strs) => ?componentScore_rhs_2
+componentScore course outcomes (MkScoreComponent compName computation weight) = 
+  case computation of
+       (Copy label) => getOutcomeByLabel course outcomes label 
+       (Max labels) => do
+         r <- traverse (getOutcomeByLabel course outcomes) labels
+         maxL r
+       (Min labels) => do
+         r <- traverse (getOutcomeByLabel course outcomes) labels
+         minL r
 
-
--- componentScore course outcomes  (Copy compName label weight) = 
---   getOutcomeByLabel course outcomes label 
--- componentScore course outcomes (Max compName labels weight) =  do
---   r <- ress
---   maxL r
---   where
---     ress : Maybe (List Double)
---     ress = traverse (getOutcomeByLabel course outcomes) labels
--- componentScore course outcomes (Min compName labels weight) = do
---   r <- ress
---   minL r
---   where
---     ress : Maybe (List Double)
---     ress = traverse (getOutcomeByLabel course outcomes) labels
 
 export
 dotProduct : Vect n Double -> Vect n Double -> Double
@@ -158,25 +148,23 @@ dotProduct xs ys = sum $ zipWith (*) xs ys
 
 export
 scoreForFormula : (course : Course) -> (outcomes : List Outcome) -> Formula -> Maybe Double
--- scoreForFormula course outcomes (MkFormula id comps) = do
---   ss <- scores {comps}
---   pure $ dotProduct weights ss
---   where
---     getWt : ScoreComponent -> Double
---     getWt (Copy _ _ weight) = weight
---     getWt (Max _ _ weight) = weight
---     getWt (Min _ _ weight) = weight
+scoreForFormula course outcomes (MkFormula id comps) = do
+  ss <- scores {comps}
+  pure $ dotProduct weights ss
+  where
+    getWt : ScoreComponent -> Double
+    getWt comp = comp.weight
 
---     scores : {comps: List ScoreComponent} -> Maybe (Vect (length comps) Double)
---     scores {comps} = do
---       traverse (componentScore course outcomes) compsV
---       where
---         compsV : Vect (length comps) ScoreComponent
---         compsV =fromList comps
+    scores : {comps: List ScoreComponent} -> Maybe (Vect (length comps) Double)
+    scores {comps} = do
+      traverse (componentScore course outcomes) compsV
+      where
+        compsV : Vect (length comps) ScoreComponent
+        compsV =fromList comps
 
 
---     weights : {comps: List ScoreComponent} -> Vect (length comps) Double
---     weights {comps} = getWt <$> fromList comps
+    weights : {comps: List ScoreComponent} -> Vect (length comps) Double
+    weights {comps} = getWt <$> fromList comps
 
 export
 result : (course:Course) -> (student:StudentData) -> Maybe StudentResult      
