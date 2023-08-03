@@ -44,15 +44,18 @@ studentReport course student =
                        <+> [ outcomes ] 
                        <+>  formulas 
                        <+>  grades
-                       <+> [ Normal [ Link $ MkHRef "#top" "return to the top of the report"] ]
+                       <+> [ Normal [ Link $ MkHRef "#top" "return to the top of the report" ] 
+                           , Normal [ Text "" ]
+                           , Normal [ Text "-----" ]
+                           ]
           , id = Just student.id
           }
 
   where 
     info : List MDPar
-    info = [ ListItem { header = [ Text $ "level: " ++ fromMaybe "" student.level], contents = []}
-           , ListItem { header = [ Text $ "majors: " ++ fromMaybe "" student.majors], contents = []}
-           , ListItem { header = [ Text $ "school: " ++ fromMaybe "" student.majors], contents = []}           
+    info = [ ListItem { header = [ Text $ "level: " ++ fromMaybe "" student.details.level], contents = []}
+           , ListItem { header = [ Text $ "majors: " ++ fromMaybe "" student.details.majors], contents = []}
+           , ListItem { header = [ Text $ "school: " ++ fromMaybe "" student.details.school], contents = []}           
            ]
   
     contents : List (Vect 2 MDText)
@@ -111,7 +114,9 @@ statsReport course students =
                                                , classMean
                                                ]
                                   }
-                       , ListItem { header = [ Text "Grades"], contents = [ gradeTable ] }  
+                       , ListItem { header = [ Text "Grades"], contents = [ gradeTable ] }
+                       , Normal [ Text "" ] 
+                       , Normal [ Text "------" ]  
                        ]
           , id = Just "statistics"
           }           
@@ -187,7 +192,8 @@ mkCourseReport course students =
     section : MDPar
     section =  Section { header = [Text course.title, Text (show course.semester)]
                        , contents = [ table
-                                    , Normal [ Text "\\newpage" ]
+                                    , Normal [ Text "" ]
+                                    , Normal [ Text "-----" ]
                                     ]
                        , id = Just "top"
                        }

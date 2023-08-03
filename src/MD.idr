@@ -113,7 +113,7 @@ renderPar pad (CodeBlock lang contents) =
     bot : String
     bot = "```"
 renderPar pad (Section header contents id) = 
-  joinBy "\n" $ the (List String) (hd::rest)
+  joinBy "\n" $ the (List String) (hd::rest ++ [""])
   where
     hd : String
     hd = (replicate pad '#') ++ " " ++ renderTextList header ++ maybe "" (\id => " {#" ++ id ++ "}") id
@@ -122,7 +122,7 @@ renderPar pad (Section header contents id) =
     rest = (renderPar (pad+1) <$> contents) <+> [""]
     
 renderPar pad (Table {ncols} header contents) = 
-  multiIndent pad $ String.joinBy "\n" $ ""::headline::headsep::(dataline <$> contents)
+  multiIndent pad $ String.joinBy "\n" $ ""::headline::headsep::(dataline <$> contents) ++ [""]
   where
     getWidths : Vect ncols Nat -> Vect ncols MDText -> Vect ncols Nat 
     getWidths old cl = let new = String.length <$> renderText <$> cl in

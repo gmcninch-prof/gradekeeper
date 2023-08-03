@@ -24,19 +24,19 @@ gradeMatch grade student =
                
 export 
 engineer : (student : StudentResult) -> Bool
-engineer student = isInfixOf "Engineering" $ fromMaybe "" student.school
+engineer student = isInfixOf "Engineering" $ fromMaybe "" student.details.school
 
 export 
 artsSciences : (Student : StudentResult) -> Bool
-artsSciences student = isInfixOf "Arts & Sciences" $ fromMaybe "" student.school
+artsSciences student = isInfixOf "Arts & Sciences" $ fromMaybe "" student.details.school
 
 export 
 mathMajor : (student : StudentResult) -> Bool
-mathMajor student = isInfixOf "Mathematics" $ fromMaybe "" student.majors
+mathMajor student = isInfixOf "Mathematics" $ fromMaybe "" student.details.majors
 
 export 
 studentClass : (className : String) -> StudentResult -> Bool
-studentClass className x = className == fromMaybe "" x.level
+studentClass className student = className == fromMaybe "" student.details.level
 
 export 
 countPred : (pred : StudentResult -> Bool) -> ( sl : List StudentResult) -> Nat

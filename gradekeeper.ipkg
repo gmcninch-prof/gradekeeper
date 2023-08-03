@@ -1,4 +1,4 @@
-package gradekeeper-idris
+package gradekeeper
 version = 0.1.0
 authors = "George McNinch"
 -- maintainers =

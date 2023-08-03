@@ -38,15 +38,22 @@ record Outcome where
 
 
 public export
+record StudentDetails where
+  constructor MkStudentDetails
+  email : Maybe String
+  majors : Maybe String
+  level : Maybe String 
+  school : Maybe String
+
+%runElab derive "StudentDetails" [ Show, Eq, ToJSON, FromJSON ]
+
+public export
 record StudentData where
   constructor MkStudentData
   name    : String
   id      : String
   section : String
-  email   : Maybe String
-  majors  : Maybe String
-  level   : Maybe String
-  school  : Maybe String
+  details : StudentDetails
   outcomes : List Outcome
 
 %runElab derive "StudentData" [Show, Eq, ToJSON, FromJSON]
@@ -57,10 +64,7 @@ record StudentResult where
   name    : String
   id      : String
   section : String
-  email   : Maybe String
-  majors  : Maybe String
-  level   : Maybe String  
-  school  : Maybe String  
+  details : StudentDetails
   courseScore : Double
   grade       : String
   outcomes    : List Outcome
@@ -179,10 +183,7 @@ result course student = do
   pure $ MkStudentResult { name = student.name
                          , id = student.id
                          , section = student.section
-                         , email = student.email
-                         , majors = student.majors
-                         , level = student.level
-                         , school = student.school
+                         , details = student.details
                          , courseScore = score
                          , grade = grade
                          , outcomes = student.outcomes
