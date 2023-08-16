@@ -3,7 +3,7 @@ module App
 import System
 import System.Console.GetOpt
 import Process
-import MD
+import Md
 
 import Data.List
 

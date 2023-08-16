@@ -1,6 +1,6 @@
 module Reports
 
-import MD
+import Md
 import Student
 import Course
 import Data.Vect

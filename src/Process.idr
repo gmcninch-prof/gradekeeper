@@ -5,7 +5,7 @@ import JSON.Derive
 
 import Course
 import Student
-import MD
+import Md
 import Reports 
 
 %language ElabReflection
