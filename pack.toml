@@ -9,4 +9,14 @@ type = "local"
 path = "test"
 ipkg = "test.ipkg"
 
+[custom.all.Md]
+type = "local"
+path = "/home/george/Tools/Md"
+ipkg = "Md.ipkg"
+
+[custom.all.IdrisTime]
+type = "local"
+path = "/home/george/Tools/IdrisTime"
+ipkg = "IdrisTime.ipkg"
+
 
