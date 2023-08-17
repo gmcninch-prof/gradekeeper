@@ -72,18 +72,15 @@ public export
 getReportByFile : (courseFileName : String) -> IO (Either String MD)
 getReportByFile courseFileName = do
   t <- getTime
-  date <- strftime "%Y-%m-%d %H:%M:%S" t
+  date <- strftime "%Y-%m-%d %H:%M:%S %Z" t
   ce <- decodefile courseFileName
-  putStrLn $ "working on " ++ courseFileName
+
   case ce of
     Left err => pure $ Left err
     Right course => do
       sle <- decodefile $ String.joinBy "/" [ course.dataDir, course.CanvasJSONFile ]
       pure $ sle >>= getReportForCourse date course 
-      -- case sle of
-      --   Left err => pure $ Left err
-      --   Right sl => 
-      --       pure $ getReportForCourse course sl
+
 
 
 display : Either String String -> IO ()
@@ -94,13 +91,8 @@ public export
 write : Either String MD -> IO ()
 write (Left err) = putStrLn $ "error: " ++ err
 write (Right md) = do
-  _ <- writeMD md
-  putStrLn $ "Wrote: " ++ fromMaybe "" md.title
+  ignore $ writeMD md
 
--- main : IO ()
--- main = do 
---   eReports <- traverse getReportByFile courseFiles
---   traverse_ write eReports
   
        
 
