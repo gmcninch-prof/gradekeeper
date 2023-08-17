@@ -7,6 +7,8 @@ import Data.Vect
 import LetterGrades
 import Stats
 
+import IdrisTime
+
 infixr 5 ^
 
 (^) : Double -> Nat -> Double
@@ -161,9 +163,9 @@ statsReport course students =
 
 
 public export 
-mkCourseReport : (course : Course) -> (students : List StudentResult) -> MD
-mkCourseReport course students = 
-  MkMD { date = Nothing
+mkCourseReport : (course : Course) -> (students : List StudentResult) -> (date : String) -> MD
+mkCourseReport course students date = 
+  MkMD { date = Just $ date
        , title = Just $ course.title ++ " " ++ show course.semester
        , author = Nothing
        , content = [ section , statsReport course students] <+> studentSections

@@ -8,6 +8,8 @@ import Student
 import Md
 import Reports 
 
+import IdrisTime
+
 %language ElabReflection
 
 decodefile : FromJSON a => String -> IO (Either String a)
@@ -60,25 +62,28 @@ getCourses (x :: xs) = do
   pure $ econs f rest
     
 
-getReportForCourse : Course -> List StudentData -> Either String MD
-getReportForCourse course students = do
+getReportForCourse : (date: String) -> Course -> List StudentData -> Either String MD
+getReportForCourse date course students = do
   results <- computeResults course students
-  pure $ mkCourseReport course results
+  pure $ mkCourseReport course results date
 
 
 public export
 getReportByFile : (courseFileName : String) -> IO (Either String MD)
 getReportByFile courseFileName = do
+  t <- getTime
+  date <- strftime "%Y-%m-%d %H:%M:%S" t
   ce <- decodefile courseFileName
   putStrLn $ "working on " ++ courseFileName
   case ce of
     Left err => pure $ Left err
     Right course => do
       sle <- decodefile $ String.joinBy "/" [ course.dataDir, course.CanvasJSONFile ]
-      case sle of
-        Left err => pure $ Left err
-        Right sl => 
-            pure $ getReportForCourse course sl
+      pure $ sle >>= getReportForCourse date course 
+      -- case sle of
+      --   Left err => pure $ Left err
+      --   Right sl => 
+      --       pure $ getReportForCourse course sl
 
 
 display : Either String String -> IO ()
