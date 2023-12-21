@@ -4,6 +4,8 @@ import Md
 import Student
 import Course
 import Data.Vect
+import Data.List
+import Data.String
 import LetterGrades
 import Stats
 
@@ -31,6 +33,10 @@ round prec num = cast (round' $ num * mod ) / mod
     mod : Double
     mod = 10^prec
 
+remSpaces : String -> String
+remSpaces str = 
+  concat $ words str
+
 summarizeGrades : (letterGrades : List Grade) -> (results : List StudentResult) -> List ( Grade, Nat )
 summarizeGrades letterGrades results = summarizeGrade' <$> letterGrades
   where
@@ -46,14 +52,17 @@ studentReport course student =
                        <+> [ outcomes ] 
                        <+>  formulas 
                        <+>  grades
-                       <+> [ Normal [ Link $ MkHRef "#top" "return to the top of the report" ] 
-                           , Normal [ Text "" ]
+                       <+> (topLink <$> student.section)
+                       <+> [ Normal [ Text "" ]
                            , Normal [ Text "-----" ]
                            ]
           , id = Just student.id
           }
 
   where 
+    topLink : String -> MDPar
+    topLink sect = Normal [ Link $ MkHRef "#top-\{remSpaces sect}" "return to \{sect} summary" ]
+  
     info : List MDPar
     info = [ ListItem { header = [ Text $ "level: " ++ fromMaybe "" student.details.level], contents = []}
            , ListItem { header = [ Text $ "majors: " ++ fromMaybe "" student.details.majors], contents = []}
@@ -168,37 +177,43 @@ mkCourseReport course students date =
   MkMD { date = Just $ date
        , title = Just $ course.title ++ " " ++ show course.semester
        , author = Nothing
-       , content = [ section , statsReport course students] <+> studentSections
+       , content = (mdSection <$> sections) ++ [ statsReport course students] <+> studentSections
        , fileName = reportFileName course
        }
   where
     headers : Vect 4 MDText
-    headers = Bold <$> [ "Name", "Id", "Score", "Grade" ]
+    headers = Bold <$> [  "Id", "Name", "Score", "Grade" ]
+  
+    sections : List String
+    sections = Data.List.sort $ Data.List.nub $ concat $ (.section <$> students)
+  
+    bySection : String -> List StudentResult -> List StudentResult
+    bySection sec students = filter (\student => sec `elem` student.section) students
   
     initItems : (student : StudentResult) -> Vect 4 MDText
     initItems student = 
-      [ Link $ MkHRef {target = "#" ++ student.id, desc = student.name }
-      , Text student.id
+      [ Text student.id
+      , Link $ MkHRef {target = "#" ++ student.id, desc = student.name }
       , Text $ (show . round 2) student.courseScore
       , Text student.grade
       ]
   
-    contents : List (Vect 4 MDText)
-    contents = initItems <$> students
+    contents : String -> List (Vect 4 MDText)
+    contents sect = initItems <$> (bySection sect students)
   
-    table : MDPar
-    table = Table { header = headers
-                  , contents = contents
-                  }
-
-    section : MDPar
-    section =  Section { header = [Text course.title, Text (show course.semester)]
-                       , contents = [ table
-                                    , Normal [ Text "" ]
-                                    , Normal [ Text "-----" ]
-                                    ]
-                       , id = Just "top"
+    table : String -> MDPar
+    table sect = Table { header = headers
+                       , contents = contents sect
                        }
+
+    mdSection : String -> MDPar
+    mdSection sect =  Section { header = [Text course.title, Text sect,  Text (show course.semester)]
+                              , contents = [ table sect
+                                           , Normal [ Text "" ]
+                                           , Normal [ Text "-----" ]
+                                           ]
+                              , id = Just $ "top-\{remSpaces sect}"
+                              }
 
     studentSections : List MDPar
     studentSections = studentReport course <$>  students

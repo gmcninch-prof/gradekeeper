@@ -52,7 +52,7 @@ record StudentData where
   constructor MkStudentData
   name    : String
   id      : String
-  section : String
+  section : List String
   details : StudentDetails
   outcomes : List Outcome
 
@@ -63,7 +63,7 @@ record StudentResult where
   constructor MkStudentResult
   name    : String
   id      : String
-  section : String
+  section : List String
   details : StudentDetails
   courseScore : Double
   grade       : String
