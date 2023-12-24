@@ -26,11 +26,11 @@ decodefile filename = do
 dir : String
 dir = "/home/george/Prof-Teach/scores/"
 
-courseFiles : List String
-courseFiles = [ String.joinBy "/" [ dir, "AY2021-2022--2022-sp--Math051.json" ]
-              , String.joinBy "/" [ dir, "AY2021-2022--2022-sp--Math135.json" ]
-              , String.joinBy "/" [ dir, "AY2022-2023--2023-sp--Math135.json" ]
-              ]
+-- courseFiles : List String
+-- courseFiles = [ String.joinBy "/" [ dir, "AY2021-2022--2022-sp--Math051.json" ]
+--               , String.joinBy "/" [ dir, "AY2021-2022--2022-sp--Math135.json" ]
+--               , String.joinBy "/" [ dir, "AY2022-2023--2023-sp--Math135.json" ]
+--               ]
 
 
 explain : { a: Type} -> (msg : String) -> Maybe a -> Either String a
@@ -64,9 +64,11 @@ getCourses (x :: xs) = do
 
 getReportForCourse : (date: String) -> Course -> List StudentData -> Either String MD
 getReportForCourse date course students = do
-  results <- computeResults course students
+  results <- computeResults course prunedStudents
   pure $ mkCourseReport course results date
-
+  where
+    prunedStudents : List StudentData
+    prunedStudents = filter (.inSIS) students
 
 public export
 getReportByFile : (courseFileName : String) -> IO (Either String MD)

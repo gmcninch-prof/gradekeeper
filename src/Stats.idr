@@ -30,9 +30,10 @@ export
 artsSciences : (Student : StudentResult) -> Bool
 artsSciences student = isInfixOf "Arts & Sciences" $ fromMaybe "" student.details.school
 
-export 
-mathMajor : (student : StudentResult) -> Bool
-mathMajor student = isInfixOf "Mathematics" $ fromMaybe "" student.details.majors
+
+export
+matchMajor : String -> (student : StudentResult) -> Bool
+matchMajor major student = isInfixOf major $ fromMaybe "" student.details.majors
 
 export 
 studentClass : (className : String) -> StudentResult -> Bool
@@ -46,9 +47,10 @@ export
 mean : List Double -> Double
 mean scores = sum scores / cast (length scores)
 
+
 export
 median : List Double -> Maybe Double
-median items with (length items)
+median items with (length (sort items))
   median items | 0 = Nothing
   median items | (S k) = do
     let sitems = sort items

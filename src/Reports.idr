@@ -8,34 +8,10 @@ import Data.List
 import Data.String
 import LetterGrades
 import Stats
+import Util
 
 import IdrisTime
 
-infixr 5 ^
-
-(^) : Double -> Nat -> Double
-(^) dbl 0 = 1.0
-(^) dbl (S k) = dbl * (dbl ^ k)
-
-round' : Double -> Integer
-round' dbl = if abs < 0.5 then floor else floor + 1
-  where
-    floor : Integer
-    floor = cast dbl
-    
-    abs : Double
-    abs = dbl - fromInteger floor
-
-public export
-round : (prec : Nat) -> (num : Double) -> Double
-round prec num = cast (round' $ num * mod ) / mod
-  where
-    mod : Double
-    mod = 10^prec
-
-remSpaces : String -> String
-remSpaces str = 
-  concat $ words str
 
 summarizeGrades : (letterGrades : List Grade) -> (results : List StudentResult) -> List ( Grade, Nat )
 summarizeGrades letterGrades results = summarizeGrade' <$> letterGrades
@@ -52,8 +28,9 @@ studentReport course student =
                        <+> [ outcomes ] 
                        <+>  formulas 
                        <+>  grades
-                       <+> (topLink <$> student.section)
-                       <+> [ Normal [ Text "" ]
+                       <+> intersperse (Normal [ Text "" ] ) (topLink <$> student.section) 
+                       <+> [ Normal [ Text "\\newpage" ]                       
+                           , Normal [ Text "" ]
                            , Normal [ Text "-----" ]
                            ]
           , id = Just student.id
@@ -69,15 +46,17 @@ studentReport course student =
            , ListItem { header = [ Text $ "school: " ++ fromMaybe "" student.details.school], contents = []}           
            ]
   
-    contents : List (Vect 2 MDText)
+    contents : List (Vect 3 MDText)
     contents = (\out => Text <$> 
       [ out.label 
-      , maybe "--" (show . round 2) $ getOutcomeByLabel course student.outcomes out.label ] ) 
+      , maybe "--" (show . round 2) $ getOutcomeByLabel course student.outcomes out.label
+      , maybe "--" (displayRawScore . .value) (getRawOutcomeByLabel course student.outcomes out.label)
+      ])
       <$> 
       student.outcomes
     
     outcomes : MDPar
-    outcomes = Table { header = Bold <$> [ "Item", "Score" ] 
+    outcomes = Table { header = Bold <$> [ "Item", "Score", "raw scores" ] 
                      , contents = contents 
                      }
   
@@ -126,7 +105,8 @@ statsReport course students =
                                                ]
                                   }
                        , ListItem { header = [ Text "Grades"], contents = [ gradeTable ] }
-                       , Normal [ Text "" ] 
+                       , Normal [ Text "\\newpage" ]                                      
+                       , Normal [ Text "" ]                                
                        , Normal [ Text "------" ]  
                        ]
           , id = Just "statistics"
@@ -156,11 +136,23 @@ statsReport course students =
 
 
     schoolTable : MDPar
-    schoolTable = Table { header = [ Text "Schools & Majors", Text "#" ]
-                        , contents = [ [ Text "A&S", Text $ show $ countPred artsSciences students ]
-                                     , [ Text "SoE", Text $ show $ countPred engineer students ]
-                                     , [ Text "Math Majors/minors", Text $ show $ countPred mathMajor students ]
-                                     ]
+    schoolTable = 
+      Table { header = [ Text "Schools & Majors", Text "#" ]
+            , contents = [ [ Text "A&S", Text $ show $ countPred artsSciences students ]
+                         , [ Text "SoE", Text $ show $ countPred engineer students ]
+                         , [ Text "Math", Text $ show $ countPred (matchMajor "Mathematics") students ]
+                         , [ Text "CS", Text $ show $ countPred (matchMajor "Computer Science") students ]
+                         , [ Text "Physics", Text $ show $ countPred (matchMajor "Physics") students ]
+                         , [ Text "Biology", Text $ show $ countPred (matchMajor "Biology") students ]
+                         , [ Text "Chemistry", Text $ show $ countPred (matchMajor "Chemistry") students ]
+                         , [ Text "Economics", Text $ show $ countPred (matchMajor "Economics") students ]
+                         , [ Text "Philosophy", Text $ show $ countPred (matchMajor "Philosophy") students ]
+                         , [ Text "Civil Eng", Text $ show $ countPred (matchMajor "Civil Engineering") students ]
+                         , [ Text "Biomed Eng", Text $ show $ countPred (matchMajor "Biomedical Engineering") students ]
+                         , [ Text "Mech Eng", Text $ show $ countPred (matchMajor "Mechanical Engineering") students ]
+                         , [ Text "Electrical Eng", Text $ show $ countPred (matchMajor "Electrical Engineering") students ] 
+                         ]
+                                     
                        }
 
 
@@ -177,7 +169,7 @@ mkCourseReport course students date =
   MkMD { date = Just $ date
        , title = Just $ course.title ++ " " ++ show course.semester
        , author = Nothing
-       , content = (mdSection <$> sections) ++ [ statsReport course students] <+> studentSections
+       , content = [ statsReport course students] <+> (mdSection <$> sections) <+> studentSections
        , fileName = reportFileName course
        }
   where
@@ -209,6 +201,7 @@ mkCourseReport course students date =
     mdSection : String -> MDPar
     mdSection sect =  Section { header = [Text course.title, Text sect,  Text (show course.semester)]
                               , contents = [ table sect
+                                           , Normal [ Text "\\newpage" ]                              
                                            , Normal [ Text "" ]
                                            , Normal [ Text "-----" ]
                                            ]

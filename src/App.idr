@@ -14,8 +14,11 @@ help = do
 
 main : IO ()
 main =  do
-  (_,args) <- Data.List.splitAt 1 <$> System.getArgs
-  
+  allArgs <- System.getArgs
+  let (_,args) =  Data.List.splitAt 1 allArgs
+
+  putStrLn $ show args
+      
   traverse_ (\a => putStrLn $ "reading: " ++ a) args
   
   eReports <- traverse getReportByFile args

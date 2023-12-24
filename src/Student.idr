@@ -7,6 +7,7 @@ import Data.SortedMap
 
 import LetterGrades
 import Course
+import Util
 
 %language ElabReflection
 
@@ -24,6 +25,12 @@ untaggedOptions = { sum := UntaggedValue
 singleOptions : Options
 singleOptions = { sum := ObjectWithSingleField
                 , constructorTagModifier := toLower } defaultOptions
+
+
+public export 
+displayRawScore : ScoreT -> String
+displayRawScore (Score score) = show $ round 2 score
+displayRawScore (ListScores scores) = show $ (round 2) <$> scores
 
 
 %runElab derive "ScoreT" [Show, Eq, customToJSON untaggedOptions, customFromJSON untaggedOptions ]
@@ -53,6 +60,7 @@ record StudentData where
   name    : String
   id      : String
   section : List String
+  inSIS   : Bool  
   details : StudentDetails
   outcomes : List Outcome
 
@@ -112,6 +120,15 @@ minL (x :: xs) = do
   case minL xs of
        Nothing => pure x
        (Just y) => pure $ min x y
+
+public export
+getRawOutcomeByLabel : (course : Course) -> (outs: List Outcome) -> (label : String) -> Maybe Outcome
+getRawOutcomeByLabel course outs label =
+  lookup label studentOutcomes
+  where
+    studentOutcomes : SortedMap String Outcome
+    studentOutcomes = fromList $ map (\res => (res.label,res)) outs
+
 
 public export
 getOutcomeByLabel : (course: Course) -> (outs : List Outcome) -> (label : String) -> Maybe Double
@@ -174,7 +191,7 @@ export
 result : (course:Course) -> (student:StudentData) -> Maybe StudentResult      
 result course student = do
   results <- traverse (scoreForFormula course student.outcomes) course.formulas
-  score <- maxL results
+  score <- round 2 <$> maxL results
   let lg = case course.grades of
                 Nothing => letterGrades
                 (Just x) => x

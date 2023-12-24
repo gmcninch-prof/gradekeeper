@@ -2,6 +2,7 @@ module LetterGrades
 
 import Derive.Prelude
 import JSON.Derive
+import Util 
 
 %language ElabReflection
 
@@ -68,7 +69,7 @@ computeGrade letterGrades score = computeGrade' descendingLetterGrades score
     computeGrade' :  (letterGrades : List Grade) -> (score : Double) -> String
     computeGrade' [] score  = show Failing
     computeGrade' (x :: xs) score = case x of
-      t@(MkGrade _ min) => if score >= min then show t else computeGrade' xs score 
+      t@(MkGrade _ min) => if (round 1 score) >= min then show t else computeGrade' xs score 
       Failing => show Failing
       Unassigned => show Unassigned
 
