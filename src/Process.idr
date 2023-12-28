@@ -8,9 +8,18 @@ import Student
 import Md
 import Reports 
 
+import Control.Monad.Reader
+
 import IdrisTime
 
 %language ElabReflection
+
+record State where
+  constructor MkState
+  course : Course
+  exceptions : List StudentException
+  studentdata : List StudentData
+  
 
 decodefile : FromJSON a => String -> IO (Either String a)
 decodefile filename = do 
@@ -22,25 +31,14 @@ decodefile filename = do
                          (Right y) => pure $ Right y  
 
 
-
-dir : String
-dir = "/home/george/Prof-Teach/scores/"
-
--- courseFiles : List String
--- courseFiles = [ String.joinBy "/" [ dir, "AY2021-2022--2022-sp--Math051.json" ]
---               , String.joinBy "/" [ dir, "AY2021-2022--2022-sp--Math135.json" ]
---               , String.joinBy "/" [ dir, "AY2022-2023--2023-sp--Math135.json" ]
---               ]
-
-
 explain : { a: Type} -> (msg : String) -> Maybe a -> Either String a
 explain msg Nothing = Left msg
 explain msg (Just x) = Right x
 
 
-computeResults : Course -> List StudentData -> Either String (List StudentResult)
-computeResults course students = do
-  explain errmsg $ traverse (result course) students
+computeResults : Course -> Maybe (List StudentException) -> List StudentData -> Either String (List StudentResult)
+computeResults course excepts students = do
+  explain errmsg $ traverse (result course excepts) students
   
   where
     errmsg : String
@@ -62,9 +60,17 @@ getCourses (x :: xs) = do
   pure $ econs f rest
     
 
-getReportForCourse : (date: String) -> Course -> List StudentData -> Either String MD
-getReportForCourse date course students = do
-  results <- computeResults course prunedStudents
+hush : Either _ b -> Maybe b
+hush (Left x) = Nothing
+hush (Right x) = Just x
+
+getReportForCourse : (date: String) 
+                   -> Course 
+                   -> Maybe (List StudentException)
+                   -> List StudentData 
+                   -> Either String MD
+getReportForCourse date course excepts students = do
+  results <- computeResults course excepts prunedStudents
   pure $ mkCourseReport course results date
   where
     prunedStudents : List StudentData
@@ -81,8 +87,8 @@ getReportByFile courseFileName = do
     Left err => pure $ Left err
     Right course => do
       sle <- decodefile $ String.joinBy "/" [ course.dataDir, course.CanvasJSONFile ]
-      pure $ sle >>= getReportForCourse date course 
-
+      excepts <- decodefile $ String.joinBy "/" [ course.dataDir, course.exceptionsFile ]
+      pure $ sle >>= getReportForCourse date course (hush excepts)
 
 
 display : Either String String -> IO ()

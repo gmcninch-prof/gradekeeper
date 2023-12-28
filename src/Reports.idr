@@ -87,7 +87,7 @@ studentReport course student =
               }
 
     formulas  : List MDPar
-    formulas = formula <$> course.formulas 
+    formulas = formula <$> getFormulas course course.gradingFormulas
    
     grades : List MDPar
     grades = [ ListItem [ Bold "Score: " , Text $ (show . round 2 ) student.courseScore ] []

@@ -80,6 +80,17 @@ record StudentResult where
 %runElab derive "StudentResult" [Show, Eq, ToJSON, FromJSON]
 
 
+public export
+record StudentException where
+  constructor MkStudentException
+  name : String
+  id : String
+  formulas : List String
+  incomplete: Bool
+  comment: String
+  
+%runElab derive "StudentException" [Show, Eq, ToJSON, FromJSON]  
+  
 -- ---------------------------------------------------------------------------------
 
 
@@ -188,9 +199,20 @@ scoreForFormula course outcomes (MkFormula id comps) = do
     weights {comps} = getWt <$> fromList comps
 
 export
-result : (course:Course) -> (student:StudentData) -> Maybe StudentResult      
-result course student = do
-  results <- traverse (scoreForFormula course student.outcomes) course.formulas
+getFormulas : (course:Course) -> (ids:List String) -> List Formula
+getFormulas course ids = mapMaybe getFormula ids
+  where
+    fmap : SortedMap String Formula
+    fmap = fromList $ (\f => (f.id,f)) <$> course.formulas
+    
+    getFormula : String -> Maybe Formula
+    getFormula id = lookup id fmap
+    
+
+export
+result : (course:Course) -> (excepts:Maybe (List StudentException)) -> (student:StudentData) -> Maybe StudentResult      
+result course excepts student = do
+  results <- traverse (scoreForFormula course student.outcomes) formulas
   score <- round 2 <$> maxL results
   let lg = case course.grades of
                 Nothing => letterGrades
@@ -205,10 +227,8 @@ result course student = do
                          , grade = grade
                          , outcomes = student.outcomes
                          }
-
-
-
-
+  where
+    formulas = getFormulas course course.gradingFormulas
 
 
 

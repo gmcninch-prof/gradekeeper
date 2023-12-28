@@ -101,11 +101,13 @@ record Course where
   semester : AcademicSemester
   strategies : List ComputeStrategy
   formulas   : List Formula
+  gradingFormulas : List String
   sections : List Section
   grades : Maybe (List Grade)
   dataDir : String
   CanvasJSONFile: String
-
+  exceptionsFile: String
+  
 %runElab derive "Course" [Show, Eq, ToJSON, FromJSON]
 
 
