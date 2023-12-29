@@ -110,7 +110,6 @@ record Course where
   
 %runElab derive "Course" [Show, Eq, ToJSON, FromJSON]
 
-
 export
 reportFileName : Course -> String
 reportFileName course = 

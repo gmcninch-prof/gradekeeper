@@ -20,23 +20,23 @@ public export
 data Grade : Type where
   MkGrade : (label : String) -> (min : Double) -> Grade
   Failing : Grade
-  Unassigned : Grade
+  Incomplete : Grade
 
 %runElab derive "Grade" [ Show, Eq, customToJSON untaggedOptions, customFromJSON untaggedOptions ]
 
 implementation Show Grade where
   show (MkGrade label min) = label
   show Failing = "F"
-  show Unassigned = "Unassigned"
+  show Incomplete = "Inc"
 
 implementation Ord Grade where
   compare (MkGrade _ min1) (MkGrade _ min2) = compare min1 min2
   compare (MkGrade _ _) _ = GT
   compare _ (MkGrade _ _) = LT
   compare Failing Failing = EQ
-  compare Unassigned Unassigned = EQ
-  compare Failing Unassigned = GT
-  compare Unassigned Failing = LT
+  compare Incomplete Incomplete = EQ
+  compare Failing Incomplete = GT
+  compare Incomplete Failing = LT
 
 export
 letterGrades : List Grade
@@ -71,7 +71,7 @@ computeGrade letterGrades score = computeGrade' descendingLetterGrades score
     computeGrade' (x :: xs) score = case x of
       t@(MkGrade _ min) => if (round 1 score) >= min then show t else computeGrade' xs score 
       Failing => show Failing
-      Unassigned => show Unassigned
+      Incomplete => show Incomplete
 
 
 export
