@@ -107,5 +107,6 @@ npm install csvtojson
 ```
 
 That `Makefile` also builds `html` and `pdf` versions of the report
-from the `markdown` output, using `pandoc`
+from the `markdown` output, using `pandoc`, which needs to be
+available on `$(PATH)`.
 
