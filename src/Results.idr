@@ -174,7 +174,10 @@ result student = do
   pure $ MkStudentResult { name = student.name
                          , id = student.id
                          , section = student.section
-                         , details = student.details
+                         , email = student.email
+                         , level = student.level
+                         , school = student.school
+                         , majors = student.majors
                          , courseScore = score
                          , grade = grade
                          , outcomes = student.outcomes
@@ -187,5 +190,5 @@ public export
 getResultState : Reader State ResultState
 getResultState = do
   state <- ask
-  studentResults <- traverse result (filter (.inSIS) state.studentdata)
+  studentResults <- traverse result state.studentdata
   pure $ MkResultState state.date state.course state.exceptions studentResults

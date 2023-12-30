@@ -54,9 +54,9 @@ studentReport student = do
     
       info : List MDPar
       info = [ ListItem { header = [ Text $ "id: \{student.id}"], contents = []}
-             , ListItem { header = [ Text $ "level: " ++ fromMaybe "" student.details.level], contents = []}
-             , ListItem { header = [ Text $ "majors: " ++ fromMaybe "" student.details.majors], contents = []}
-             , ListItem { header = [ Text $ "school: " ++ fromMaybe "" student.details.school], contents = []}           
+             , ListItem { header = [ Text $ "level: " ++ student.level], contents = []}
+             , ListItem { header = [ Text $ "majors: " ++ joinBy ", " student.majors], contents = []}
+             , ListItem { header = [ Text $ "school: " ++ student.school], contents = []}           
              ]
 
       cscore : Course -> ScoreComponent -> Maybe Double
@@ -116,6 +116,7 @@ statsReport = do
     Section { header = [ Text "Statistics" ] 
             , contents = [ ListItem { header = [ Text "Levels"], contents =[ levelTable students ] }
                          , ListItem { header = [ Text "School"], contents = [ schoolTable students ] }
+                         , ListItem { header = [ Text "Majors"], contents = [ majorsTable students ] }
                          , ListItem { header = [ Text "Score statistics" ]
                                     , contents = [ classMedian students
                                                  , classMean students
@@ -157,23 +158,20 @@ statsReport = do
 
     schoolTable : List StudentResult -> MDPar
     schoolTable students = 
-      Table { header = [ Text "Schools & Majors", Text "#" ]
+      Table { header = [ Text "School", Text "#" ]
             , contents = [ [ Text "A&S", Text $ show $ countPred artsSciences students ]
                          , [ Text "SoE", Text $ show $ countPred engineer students ]
-                         , [ Text "Math", Text $ show $ countPred (matchMajor "Mathematics") students ]
-                         , [ Text "CS", Text $ show $ countPred (matchMajor "Computer Science") students ]
-                         , [ Text "Physics", Text $ show $ countPred (matchMajor "Physics") students ]
-                         , [ Text "Biology", Text $ show $ countPred (matchMajor "Biology") students ]
-                         , [ Text "Chemistry", Text $ show $ countPred (matchMajor "Chemistry") students ]
-                         , [ Text "Economics", Text $ show $ countPred (matchMajor "Economics") students ]
-                         , [ Text "Philosophy", Text $ show $ countPred (matchMajor "Philosophy") students ]
-                         , [ Text "Civil Eng", Text $ show $ countPred (matchMajor "Civil Engineering") students ]
-                         , [ Text "Biomed Eng", Text $ show $ countPred (matchMajor "Biomedical Engineering") students ]
-                         , [ Text "Mech Eng", Text $ show $ countPred (matchMajor "Mechanical Engineering") students ]
-                         , [ Text "Electrical Eng", Text $ show $ countPred (matchMajor "Electrical Engineering") students ] 
-                         ]
-                                     
+                         ]                                     
                        }
+
+    majorsTable : List StudentResult -> MDPar
+    majorsTable students = 
+      Table { header = [ Text "Schools & Majors", Text "#" ]
+            , contents = (\major => [ Text major, Text $ show $ countPred (matchMajor major) students ])<$>
+                         getMajors students
+                       }
+
+
 
 
     gradeTable : List StudentResult -> MDPar

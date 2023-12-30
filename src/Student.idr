@@ -42,24 +42,26 @@ record Outcome where
 %runElab derive "Outcome" [Show, Eq, ToJSON, FromJSON]
 
 
-public export
-record StudentDetails where
-  constructor MkStudentDetails
-  email : Maybe String
-  majors : Maybe String
-  level : Maybe String 
-  school : Maybe String
+-- public export
+-- record StudentDetails where
+--   constructor MkStudentDetails
+--   email : Maybe String
+--   majors : Maybe String
+--   level : Maybe String 
+--   school : Maybe String
 
-%runElab derive "StudentDetails" [ Show, Eq, ToJSON, FromJSON ]
+-- %runElab derive "StudentDetails" [ Show, Eq, ToJSON, FromJSON ]
 
 public export
 record StudentData where
   constructor MkStudentData
   name    : String
   id      : String
+  email   : String
+  level   : String
+  school  : String
+  majors  : List String
   section : List String
-  inSIS   : Bool  
-  details : StudentDetails
   outcomes : List Outcome
 
 %runElab derive "StudentData" [Show, Eq, ToJSON, FromJSON]
@@ -70,7 +72,10 @@ record StudentResult where
   name    : String
   id      : String
   section : List String
-  details : StudentDetails
+  email   : String
+  level   : String
+  school  : String
+  majors  : List String  
   courseScore : Double
   grade       : String
   outcomes    : List Outcome

@@ -105,8 +105,8 @@ record Course where
   sections : List Section
   grades : Maybe (List Grade)
   dataDir : String
-  CanvasJSONFile: String
-  exceptionsFile: String
+  courseJSONFile: String
+  exceptionsFile: Maybe String
   
 %runElab derive "Course" [Show, Eq, ToJSON, FromJSON]
 

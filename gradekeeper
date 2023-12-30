@@ -1,8 +1,0 @@
-#!/bin/env bash
-
-cd /home/george/Tools/gradekeeper
-
-./build/exec/gradekeeper /home/george/Prof-Teach/scores/AY2023-2024*.json
-
-
-#./build/exec/gradekeeper /home/george/Prof-Teach/scores/AY*.json

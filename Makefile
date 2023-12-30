@@ -6,8 +6,7 @@ SCRIPTDIR = /home/george/Code/admin
 all: script idris
 
 .PHONY = script
-
-script: gradekeeper
+script: assets/gradekeeper
 	cp $< $(SCRIPTDIR)
 
 libtime_wrappers.so: $(wrapper_src)
@@ -15,6 +14,11 @@ libtime_wrappers.so: $(wrapper_src)
 	cp $@ $(LIBDIR)
 
 .PHONY = idris
-
 idris:  
 	pack build gradekeeper.ipkg
+
+
+.PHONY = example
+examp:
+	echo "running make in 'example' directory"
+	$(MAKE) -C example

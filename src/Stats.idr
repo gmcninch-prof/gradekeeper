@@ -21,23 +21,29 @@ gradeMatch grade student =
                         , ("D", [ "D+", "D", "D-" ] )
                         , ("F", [ "F" ])
                         ]
-               
-export 
-engineer : (student : StudentResult) -> Bool
-engineer student = isInfixOf "Engineering" $ fromMaybe "" student.details.school
 
-export 
-artsSciences : (Student : StudentResult) -> Bool
-artsSciences student = isInfixOf "Arts & Sciences" $ fromMaybe "" student.details.school
-
+export
+getMajors: List StudentResult -> List String
+getMajors students = sort $ nub $ concat $ (.majors) <$> students
 
 export
 matchMajor : String -> (student : StudentResult) -> Bool
-matchMajor major student = isInfixOf major $ fromMaybe "" student.details.majors
+matchMajor major student = major `elem` student.majors
+
+
+export 
+engineer : (student : StudentResult) -> Bool
+engineer student = isInfixOf "Engineering" $ student.school
+
+export 
+artsSciences : (Student : StudentResult) -> Bool
+artsSciences student = isInfixOf "Arts & Sciences" $ student.school
+
+
 
 export 
 studentClass : (className : String) -> StudentResult -> Bool
-studentClass className student = className == fromMaybe "" student.details.level
+studentClass className student = className == student.level
 
 export 
 countPred : (pred : StudentResult -> Bool) -> ( sl : List StudentResult) -> Nat

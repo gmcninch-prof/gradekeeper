@@ -67,7 +67,9 @@ getState courseFileName =   do
   case ce of
     Left err => pure $ Left err
     Right course => do
-      sle <- decodefile $ String.joinBy "/" [ course.dataDir, course.CanvasJSONFile ]
-      excepts <- eraseEitherList <$> (decodefile $ String.joinBy "/" [ course.dataDir, course.exceptionsFile ])
+      sle <- decodefile $ String.joinBy "/" [ course.dataDir, course.courseJSONFile ]
+      excepts <- case course.exceptionsFile of
+                      Nothing => pure []
+                      Just f => eraseEitherList <$> (decodefile $ String.joinBy "/" [ course.dataDir, f ])
       pure $  MkState date course excepts <$> sle
 
