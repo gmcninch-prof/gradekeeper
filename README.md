@@ -31,13 +31,22 @@ specifications for the course:
     for the `problemsets` is "`dropandaverage`" (i.e. drop the lowest
     grade and return the average).
 	
-  - It gives us two grading formulas `S1` and `S2`. (A students course
+  - It gives us two grading formulas `S1` and `S2`. 
+  
+    
+	The field 
+	```
+	"gradingFormulas": ["S1","S2"]
+	```
+	indicates that by default, a students course
     score will then be the *maximum* of the scores determined by `S1`
     and by `S2`.
 	
     It also defines an `exceptional` grading formula `except`. To
 	apply an exceptional formula, a student must appear in the
-	`exceptionsFile`, in this case `grade-exceptions.json`.
+	`exceptionsFile`, in this case `grade-exceptions.json`.  It then
+	*over-rides* the `gradingFormulas` field for that indicated
+	student.
 	
   - It includes a specification (`grades`) for turning numerical
     scores into letter grades (you can instead set
