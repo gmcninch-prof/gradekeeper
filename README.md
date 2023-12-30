@@ -20,9 +20,9 @@ convert.js Mathxyz-definitions.json
 produces `Mathxyz-grades.json` using data from `Mathxyz-enrollment.csv` and
 `Mathxyz-canvas-grades.csv`.
 
-At Tufts, `Mathxyz-enrollment` is the `csv` representation of the
+At Tufts, `Mathxyz-enrollment.csv` is the `csv` representation of the
 class that one gets from `SIS`, and `Mathxyz-canvas-grades.csv` is
-what you get upon `export`ing course grades from `Canvas`.
+what one gets upon `export`ing course grades from `Canvas`.
 
 The `definitions` file `Mathxyz-definitions.json` includes
 specifications for the course:
