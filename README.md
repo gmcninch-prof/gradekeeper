@@ -7,7 +7,7 @@ Compute grades for a class.
 There is a (hopefully) working example in the `examples` directory.
 
 
-## "What does the do, and what do I need to do to get it working?"
+## "What does this thing do, and what do I need to do to get it working?"
 
 In the unlikely event that anyone tries to use this code, here is a
 quick overview for how I use it for a given course.
@@ -234,8 +234,8 @@ On the other hand, the `JSON` specification
 
 becomes the term `Max ["midterm1", "midterm2"]` of type `Computation`.
 
-Again, in the `JSON` description, the list `["midterm1", "midterm2"]` needed to be
-wrapped as a list because the `Copy` constructor could have taken more
-than one argument.
+Again, in the `JSON` description, the list `["midterm1", "midterm2"]`
+needed to be wrapped as a list (thus producing the "double list")
+because the `Max` constructor could have taken more than one argument.
 
 
