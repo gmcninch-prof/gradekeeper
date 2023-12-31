@@ -57,3 +57,48 @@ divTwoF n with (parity n)
                  0 => ?prf_rhs_0
                  (S j) => ?prf_rhs_2
 
+--------------------------------------------------------------------------------
+
+data Parity : Nat -> Type where
+   Even : {n : _} -> Parity (n + n)
+   Odd  : {n : _} -> Parity (S (n + n))
+
+parity : (n : Nat) -> Parity n
+parity Z = Even {n = Z}
+parity (S Z) = Odd {n = Z}
+parity (S (S k)) with (parity k)
+  parity (S (S (j + j))) | Even
+      = rewrite plusSuccRightSucc j j in Even {n = S j}
+  parity (S (S (S (j + j)))) | Odd
+      = rewrite plusSuccRightSucc j j in Odd {n = S j}
+
+divTwo : Nat -> Nat
+divTwo k with (parity k)
+  divTwo (n + n) | Even = n
+  divTwo (S (n + n)) | Odd = (S n)
+
+
+cond : (k:Nat) -> Dec (LT (divTwo k) (S k))
+cond k = isLT (divTwo k) (S k)
+
+
+medianHelper : {k:Nat} -> {is:IsSucc k} -> Vect k Double -> Double
+medianHelper {k = (S n)} items with (cond n)
+  medianHelper {k= (S n)} items | (Yes prf) =
+      let idx : Fin (S n)
+          idx = natToFinLT (divTwo n) {prf}
+      in
+          index idx items
+  medianHelper {k=S n} items | (No contra) = 
+    index FZ items
+
+median' : List Double -> Double
+median' [] = 0.0
+median' (x :: xs) with (length (x::xs))
+  median' (x :: xs) | (S k) = ?median'_rhs_1
+
+  -- where                        
+  --   l = length (x :: xs)
+
+  --   v : Vect l Double
+  --   v = fromList t
