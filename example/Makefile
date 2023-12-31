@@ -1,4 +1,4 @@
-CONVERT=assets/convert.js
+CONVERT=../assets/convert.js
 
 PD=pandoc --standalone --from markdown  -V linkcolor:red --metadata-file=assets/metadata.yaml 
 
