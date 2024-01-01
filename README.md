@@ -45,7 +45,7 @@ I'll now give a bit more detailed description of the *example*.
 
 In that directory, running
 
-```
+```bash
 convert.js Mathxyz-definitions.json
 ```
 
@@ -67,7 +67,7 @@ specifications for the course:
   
     
 	The field 
-	```
+	```JSON
 	"gradingFormulas": ["S1","S2"]
 	```
 	indicates that by default, a students course
@@ -83,7 +83,7 @@ specifications for the course:
   - It includes a specification (`grades`) for turning numerical
     scores into letter grades (you can instead set
 	
-	```
+	```JSON
 	"grades": null
 	```
 	
@@ -95,7 +95,7 @@ specifications for the course:
 	
 	For example,
 	
-	```
+	```JSON
 	...
 	{ "label": "midterm2",
       "value": "Midterm 2 (333)",
@@ -129,7 +129,7 @@ specifications for the course:
 
 Now,  the `idris2` program `gradekeeper` is run 
 
-```
+```bash
 gradekeeper Mathxyz-definitions.json
 ```
 
@@ -153,7 +153,7 @@ You should be able to test the example via `make examp`.
 
 The `Makefile`  in the example directory runs
 
-```
+```bash
 npm install csvtojson
 ```
 
@@ -166,7 +166,7 @@ available in the `$(PATH)`.
 
 Here is an example `formula` in the `JSON` course definition:
 
-```
+```JSON
     { "id": "S1",
       "formula": [ {"compName": "Final",
 		    "computation":{"copy": ["final exam"]},
@@ -187,7 +187,7 @@ Here is an example `formula` in the `JSON` course definition:
 Some of the structure perhaps feels a bit odd. The point is that this is parsed to a
 `Formula` data structure in `idris`, as follows:
 
-```
+```idris
 data Computation = Copy String
                  | Max (List String) 
                  | Min (List String) 
@@ -226,7 +226,7 @@ than one argument.
 
 On the other hand, the `JSON` specification 
 
-```
+```JSON
 { "compName": "Max midterm",
   "computation":{"max": [["midterm1", "midterm2"]]},
   "weight": 0.25}
