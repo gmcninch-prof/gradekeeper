@@ -136,8 +136,8 @@ statsReport = do
                  , contents = []
                  }
       where
-        m : Maybe Double
-        m = map (round 2) (median $ .courseScore <$> students)
+        m : Double
+        m = (round 2) (median $ .courseScore <$> students)
 
     classMean : List StudentResult -> MDPar
     classMean students = 

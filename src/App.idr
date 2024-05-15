@@ -46,7 +46,8 @@ write (Left err) = putStrLn $ "error: " ++ err
 write (Right md) = do
   ignore $ writeMD md
 
-
+
+ 
 main : IO ()
 main =  do
   allArgs <- System.getArgs
