@@ -37,12 +37,14 @@ runReports filename = do
   stateE <- getState filename
   case stateE of
        (Left err) => pure $ Left err
-       (Right state) => pure $ Right $ runReader state courseReport 
+       (Right state) => case state.course.status of
+         Finished => pure $ Left $ "course \{show state.course.semester} \{state.course.title} completed"
+         Current => pure $ Right $ runReader state courseReport 
 
 
 public export
 write : Either String MD -> IO ()
-write (Left err) = putStrLn $ "error: " ++ err
+write (Left err) = putStrLn $ err
 write (Right md) = do
   ignore $ writeMD md
 
@@ -53,9 +55,9 @@ main =  do
   allArgs <- System.getArgs
   let (_,args) =  Data.List.splitAt 1 allArgs
 
-  putStrLn $ show args
+  -- putStrLn $ show args
       
-  traverse_ (\a => putStrLn $ "reading: " ++ a) args
+  --traverse_ (\a => putStrLn $ "course: " ++ a) args
   
   eReports <- traverse runReports args
   traverse_ write eReports

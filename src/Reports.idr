@@ -32,7 +32,7 @@ studentReport : ( student : StudentResult ) -> Reader ResultState MDPar
 studentReport student = do
   state <- ask 
   let course : Course = state.course    
-  rawFormulas <- the (List Formula) <$> getFormulas student.id
+  rawFormulas <- getFormulas student.id
 
   pure $
     Section { header = [ Text student.name ]

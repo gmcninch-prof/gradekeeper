@@ -62,7 +62,7 @@ getState : (courseFileName : String) -> IO (Either String State)
 getState courseFileName =   do
   t <- getTime
   date <- strftime "%Y-%m-%d %H:%M:%S %Z" t
-  ce <- the (Either String Course) <$> decodefile courseFileName
+  ce <- decodefile courseFileName
 
   case ce of
     Left err => pure $ Left err
