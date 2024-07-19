@@ -19,7 +19,7 @@ depends    = base         >= 0.5.1
            , pretty-show  >= 0.5.0
            , sop          >= 0.5.0
 	   , json         >= 0.5.0
-	   , Md
+	   , Md        
 	   , IdrisTime
 
 -- modules to install

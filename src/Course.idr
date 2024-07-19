@@ -115,8 +115,6 @@ record Course where
   gradingFormulas : List String
   sections : List Section
   grades : Maybe (List Grade)
-  dataDir : String
-  courseJSONFile: String
   exceptionsFile: Maybe String
   
 %runElab derive "Course" [Show, Eq, ToJSON, FromJSON]
@@ -124,4 +122,4 @@ record Course where
 export
 reportFileName : Course -> String
 reportFileName course = 
-  String.joinBy "/" [course.dataDir, course.title ++ "-" ++ show course.semester ++ ".md"]
+  course.title ++ "-" ++ show course.semester ++ ".md"

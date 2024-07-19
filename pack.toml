@@ -19,4 +19,9 @@ type = "local"
 path = "/home/george/Tools/IdrisTime"
 ipkg = "IdrisTime.ipkg"
 
+[custom.all.csv-idris]
+type = "local"
+path = "/home/george/Tools/csv-idris"
+ipkg = "csv-idris.ipkg"
+
 

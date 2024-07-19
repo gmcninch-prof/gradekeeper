@@ -1,13 +1,16 @@
 
 
 LIBDIR = /home/george/Code/lib
-SCRIPTDIR = /home/george/Code/admin
+SCRIPTDIR = /home/george/assets/admin-code
+BINDIR = /home/george/.local/bin
 
-all: script idris
 
-.PHONY = script
-script: assets/gradekeeper
-	cp $< $(SCRIPTDIR)
+all: scripts idris
+
+.PHONY = scripts
+scripts: 
+	cp assets/gradekeeper $(SCRIPTDIR)
+	cp assets/grade-data.scm $(BINDIR)
 
 libtime_wrappers.so: $(wrapper_src)
 	cc -shared $< -o $@

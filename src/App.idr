@@ -6,6 +6,7 @@ import Data.List
 import JSON.Derive
 import System
 import System.File.ReadWrite
+import System.Console.GetOpt
 
 import Course
 import IdrisTime
@@ -15,6 +16,8 @@ import Reports
 import Results
 import State
 import Util
+
+import Data.List
 
 -- computeResults : List StudentData -> Reader State (List StudentResult)
 -- computeResults sd = do
@@ -32,9 +35,9 @@ courseReport = do
   pure report 
     
 
-runReports : String -> IO (Either String MD)
-runReports filename = do
-  stateE <- getState filename
+runReports : String -> String -> IO (Either String MD)
+runReports courseFile dataFile = do
+  stateE <- getState courseFile dataFile
   case stateE of
        (Left err) => pure $ Left err
        (Right state) => case state.course.status of
@@ -50,16 +53,34 @@ write (Right md) = do
 
 
  
+optionSpec : OptDescr String
+optionSpec = MkOpt { shortNames = ['c']
+                   , longNames =  ["spec"]
+                   , argDescr = (ReqArg id "CourseSpec") 
+                   , description = "filename for course specs"
+                   }
+
+optionData : OptDescr String
+optionData = MkOpt { shortNames = ['d']
+                   , longNames = ["data"]
+                   , argDescr =  (ReqArg id "CourseData") 
+                   , description = "filename for course data"
+                   }
+ 
+ 
+ 
 main : IO ()
 main =  do
   allArgs <- System.getArgs
-  let (_,args) =  Data.List.splitAt 1 allArgs
 
-  -- putStrLn $ show args
-      
-  --traverse_ (\a => putStrLn $ "course: " ++ a) args
-  
-  eReports <- traverse runReports args
-  traverse_ write eReports
-  
+  let result : GetOpt.Result String 
+      result = getOpt Permute [ optionSpec , optionData] (drop 1 allArgs)
 
+
+  case options result of
+       [spec, dat] => do
+         putStrLn "spec: \{spec}, dat: \{dat}"
+         eReports <- runReports spec dat
+         write eReports
+       _ => putStrLn "Error"
+    

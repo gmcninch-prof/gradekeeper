@@ -2,7 +2,7 @@
 
 #cd /home/george/Tools/gradekeeper
 
-/home/george/Tools/gradekeeper/build/exec/gradekeeper $1
+/home/george/Tools/gradekeeper/build/exec/gradekeeper "$@"
 
 
 #./build/exec/gradekeeper /home/george/Prof-Teach/scores/AY*.json

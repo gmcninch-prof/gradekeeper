@@ -24,6 +24,7 @@ decodefile filename = do
                          (Right y) => pure $ Right y  
 
 
+public export
 infixr 5 ^
 
 public export 

@@ -13,8 +13,7 @@ import Course
 import State
 import Student
 
--- ---------------------------------------------------------------------------------
-
+
 
 average : List Double -> Double
 average dbls = (1/len)*sum dbls

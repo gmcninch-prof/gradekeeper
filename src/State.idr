@@ -58,18 +58,19 @@ eraseEitherList (Left _) = []
 eraseEitherList (Right xl) = xl
 
 public export 
-getState : (courseFileName : String) -> IO (Either String State)
-getState courseFileName =   do
+getState : (specFile : String) -> (dataFile:String) -> IO (Either String State)
+getState specFile dataFile =   do
   t <- getTime
   date <- strftime "%Y-%m-%d %H:%M:%S %Z" t
-  ce <- decodefile courseFileName
+  course <- decodefile specFile
+  cdata <- decodefile dataFile
 
-  case ce of
-    Left err => pure $ Left err
-    Right course => do
-      sle <- decodefile $ String.joinBy "/" [ course.dataDir, course.courseJSONFile ]
-      excepts <- case course.exceptionsFile of
+  case (course,cdata) of
+    (Left err,_) => pure $ Left err
+    (_,Left err) => pure $ Left err
+    (Right xcourse,Right xcdata) => do
+      excepts <- case xcourse.exceptionsFile of
                       Nothing => pure []
-                      Just f => eraseEitherList <$> (decodefile $ String.joinBy "/" [ course.dataDir, f ])
-      pure $  MkState date course excepts <$> sle
+                      Just f => eraseEitherList <$> (decodefile f)
+      pure $  Right $ MkState date xcourse excepts xcdata
 
