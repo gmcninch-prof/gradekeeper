@@ -2,7 +2,7 @@
 exec guile -e main -s "$0" "$@"
 !#
 ;;--------------------------------------------------------------------------------
-;; Time-stamp: <2024-07-18 Thu 14:49 EDT - george@valhalla>
+;; Time-stamp: <2024-07-20 Sat 11:59 EDT - george@valhalla>
 ;;
 
 (use-modules (csv-to-json)
@@ -46,7 +46,7 @@ exec guile -e main -s "$0" "$@"
 
 (define (split-and x)
   (let*
-      ((pos (string-contains x " and ")))
+      ((pos (if (string? x) (string-contains x " and ") #f)))
     (if pos
 	(let
 	    ((start (substring x 0 pos))
@@ -94,11 +94,12 @@ exec guile -e main -s "$0" "$@"
 			    ((label (assoc-ref c "label"))
 			     (heading (assoc-ref c "heading"))
 			     (max     (assoc-ref c "max"))
-			     (raw     (or (string->number (assoc-ref crec heading)) 0))
-			     (result (* 100 (/ raw max))))
+			     (raw     (string->number (or (assoc-ref crec heading) "0")))
+			     (result  (* 100 (/ (or  raw 0) max))))
 			  `(("label"   . ,label)
 			    ("value"   . ,result))))
 		      (vector->list canvas-spec))))
+    (format (current-error-port) "~a\n" (assoc-ref rec "Name"))
     `(("name"    . ,(assoc-ref rec "Name"))
       ("id"      . ,(assoc-ref rec "ID"))
       ("email"   . ,(assoc-ref rec "Email"))
@@ -116,12 +117,14 @@ exec guile -e main -s "$0" "$@"
   (let*
       ((option-spec    '((course     (single-char #\c) (value #t))
 			 (canvas     (single-char #\v) (value #t))
-			 (enroll     (single-char #\e) (value #t))))
+			 (enroll     (single-char #\e) (value #t))
+			 (output     (single-char #\o) (value #t))))
        (options        (getopt-long argv option-spec))
        (course         (option-ref options 'course  #f))
        (enroll-csv     (option-ref options 'enroll  #f))
        (canvas-csv     (option-ref options 'canvas  #f))
-       (course-spec    (if course (get-course-spec course) #f)))
+       (course-spec    (if course (get-course-spec course) #f))
+       (output         (option-ref options 'output #f)))
     (if course-spec
 	(let*
 	    ((canvas-spec    (assoc-ref course-spec "CanvasSpec"))
@@ -129,17 +132,28 @@ exec guile -e main -s "$0" "$@"
 			      (lambda (rec) (cons (assoc-ref rec "Integration ID") rec))
 			      (vector->list (csv-file->sxml canvas-csv #:start 2))))
 	     (enroll         (csv-file->sxml enroll-csv))
-	     (rec            (build-student-record canvas-map canvas-spec (vector-ref enroll 3)))
 	     )
-	  (scm->json
-	   (list->vector
-	    (map
-	     (lambda (rec)
-	       (build-student-record canvas-map canvas-spec rec))
-	     (vector->list enroll)
-	     ))
-	   #:pretty #t)
+	  ;; (for-each
+	  ;;  (lambda (rec)
+	  ;;    (format (current-error-port) "~s\n\n" rec))
+	  ;;  (vector->list enroll))
+	  (if output
+	      (with-output-to-file output
+		(lambda ()
+		  (scm->json
+		   (list->vector
+		    (map
+		     (lambda (rec)
+		       (build-student-record canvas-map canvas-spec rec))
+		     (vector->list enroll)
+		     ))
+		   #:pretty #t)))
+	      (format #t "No output file specified"))
 	  )
 	)
     )
   )
+
+;; Local Variables:
+;; mode: scheme
+;; End:

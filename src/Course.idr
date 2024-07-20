@@ -95,19 +95,19 @@ public export
 implementation Show AcademicSemester where
   show ac = show ac.ay ++ "-" ++ show ac.semester
 
-public export
-data CourseStatus : Type where
-  Finished : CourseStatus
-  Current  : CourseStatus
+-- public export
+-- data CourseStatus : Type where
+--   Finished : CourseStatus
+--   Current  : CourseStatus
 
-%runElab derive "CourseStatus" [ Show, Eq, customToJSON singleOptions, customFromJSON singleOptions ]
+-- %runElab derive "CourseStatus" [ Show, Eq, customToJSON singleOptions, customFromJSON singleOptions ]
 
 
 public export
 record Course where
   constructor MkCourse
   title   : String
-  status : CourseStatus
+--  status : CourseStatus
   instructors : List String
   semester : AcademicSemester
   strategies : List ComputeStrategy

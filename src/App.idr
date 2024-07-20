@@ -25,8 +25,6 @@ import Data.List
 --   let results : List StudentResult = mapMaybe (result state.course state.exceptions) sd
 --   pure results
 
-
-
 courseReport : Reader State MD
 courseReport = do
   state <- ask
@@ -40,9 +38,11 @@ runReports courseFile dataFile = do
   stateE <- getState courseFile dataFile
   case stateE of
        (Left err) => pure $ Left err
-       (Right state) => case state.course.status of
-         Finished => pure $ Left $ "course \{show state.course.semester} \{state.course.title} completed"
-         Current => pure $ Right $ runReader state courseReport 
+       (Right state) => pure $ Right $ runReader state courseReport 
+       
+         -- case state.course.status of
+         --   Finished => pure $ Left $ "course \{show state.course.semester} \{state.course.title} completed"
+         --   Current => pure $ Right $ runReader state courseReport 
 
 
 public export
