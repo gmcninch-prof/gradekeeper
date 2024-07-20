@@ -26,9 +26,10 @@ file. There is an example (discussed below) in the `example` directory.
 
 There are two different functions provided by the code in this repo.
 
-- a short script for producing a `JSON` description of the students
-  and their scores. This is found in the `assets` directory, is
-  written in javascript, and depends on the `node` package `csvtojson`.
+- a `guile-scheme` script `grade-data.scm` for producing a `JSON`
+  description of the students and their scores. This is found in the
+  `assets` directory. It depends on a few `guile` libraries:
+  `guile-dsv` and `guile-json`
   
 - an `idris2` program `gradekeeper` which takes as input the `JSON`
   course definition and -- using the `JSON` description of students +
@@ -37,24 +38,19 @@ There are two different functions provided by the code in this repo.
 - One can then produce `PDF` and `HTML` versions of the grade report
   using [`pandoc`](http://www.pandoc.org).
   
-I'll now give a bit more detailed description of the *example*.
+I'll now give a bit more detailed description of the *example*
 
-## Assembling the data
 
-`examples/assets` contains a `javascript` script `convert.js`.
+## Assembling the data and producing the report
 
-In that directory, running
+The recommendation is to copy/adapt the `Makefile` in the `examples`
+directory.  It invokes `grade-data.scm` to produce the "data `json`"
+output.
 
-```bash
-convert.js Mathxyz-definitions.json
-```
-
-produces `Mathxyz-grades.json` using data from `Mathxyz-enrollment.csv` and
-`Mathxyz-canvas-grades.csv`.
-
-At Tufts, `Mathxyz-enrollment.csv` is the `csv` representation of the
-class that one gets from `SIS`, and `Mathxyz-canvas-grades.csv` is
-what one gets upon `export`ing course grades from `Canvas`.
+In that directory, `Mathxyz-enrollment.csv` is the `csv`
+representation of the class that one gets (at Tufts) from `SIS`, and
+`Mathxyz-canvas-grades.csv` is what one gets upon `export`ing course
+grades (at Tufts) from `Canvas`.
 
 The `definitions` file `Mathxyz-definitions.json` includes
 specifications for the course:
@@ -97,37 +93,53 @@ specifications for the course:
 	
 	```JSON
 	...
-	{ "label": "midterm2",
-      "value": "Midterm 2 (333)",
-      "max": 100
-    },
-    { "label": "problemsets",
-      "value": { "scores":
-		 [ {"value": "ProblemSet 01 (444)",
-		    "max": 40.0
-		   },
-		   {"value": "ProblemSet 02 (555)",
-		    "max": 35.0
-		   },
-		   {"value": "ProblemSet 03 (666)",
-		    "max": 35.0
-		   }
-		 ]
-	       }
-    }
+	[{ "label": "midterm2",
+       "heading": "Midterm 2 (333)",
+       "max": 100
+     },
+     { "label": "problemsets",
+	   "heading": "ProblemSet 01 (444)",
+	   "max": 40.0
+     },
+	 { "label": "problemsets",
+	   "heading": "ProblemSet 02 (555)",
+	   "max": 35.0
+     },
+	 { "label": "problemsets",
+       "heading": "ProblemSet 03 (666)",
+	   "max": 35.0
+     }
+    ]
 	...
 	```
 
-    Determines labels `midterm2` and `problemsets` (which are used in
-    the `grading formulas` mentioned earlier). The `value` parameter
+    determines labels `midterm2` and `problemsets` (which are used in
+    the `grading formulas` mentioned earlier). The `heading` parameter
 	indicates the field name in the data from canvas (in this case, 
 	the field names found in `Mathxyz-canvas-grades.csv`).
     
 
+Now, the `Makefile` invokes `grade-data.scm` via the following stanza:
+
+```
+CONVERT=/home/george/.local/bin/grade-data.scm
+
+$(COURSE_DATA): $(COURSE_SPEC) $(ENROLL_CSV) $(CANVAS_CSV)
+	@unix2dos -q $(ENROLL_CSV)
+	@unix2dos -q $(CANVAS_CSV)
+	$(CONVERT) --enroll $(ENROLL_CSV) --course $(COURSE_SPEC) --canvas $(CANVAS_CSV) --output $(COURSE_DATA)
+```
+
+For the correct operation of the `(guile dsv)` module, the `csv` files
+need to be in `DOS` format -- i.e. they need to have `CRLF`
+end-of-lines (`\r\n` instead of just `\n`). So the code above makes
+sure this is the case using the script `unix2dos`.
+
+Now we invoke the `grade-data.scm` on the two `csv` files together with the json `spec` file.
 
 ## Producing the grade report
 
-Now,  the `idris2` program `gradekeeper` is run 
+Now,  the `Makefile` also runs the `idris2` program `gradekeeper` 
 
 ```bash
 gradekeeper Mathxyz-definitions.json
@@ -136,31 +148,23 @@ gradekeeper Mathxyz-definitions.json
 Using the data in `Mathxyz-grades.json`, it computes scores and grades
 for each student, and writes a report in `markdown` format.
 
-## Requirements
+In the `Makefile` this is invoked by the stanza:
 
-The script `convert.js` which *assembles* the data depends on the node
-package `csvtojson`.
+```
+GK=gradekeeper
+targets_md=Mathxyz-2023-2024-Fall.md
 
-The main program -- `gradekeeper` -- should be compiled via
-[`idris2`](https://www.idris-lang.org/). This repo uses
-[`pack`](https://github.com/stefan-hoeck/idris2-pack) for package
-management via the `pack.toml` file.
-
-Running `make` should run `pack build gradekeeper.ipkg` which produces
-an executable in `build/exec`.
-
-You should be able to test the example via `make examp`.
-
-The `Makefile`  in the example directory runs
-
-```bash
-npm install csvtojson
+$(targets_md): $(COURSE_SPEC) $(COURSE_DATA)
+	$(GK) --spec $(COURSE_SPEC) --data $(COURSE_DATA)
 ```
 
-That `Makefile` also builds `html` and `pdf` versions of the report
-from the `markdown` output, using `pandoc`, which needs to be
-available in the `$(PATH)`.
+Now the `html` and `pdf` are produced from the `md` via `pandoc`.
 
+## Requirements
+
+The code depends on `idris2` and various libraries (installed via
+`pack`), `guile`, the `guile` libraries `(guile dsv)` and `(guile json)`, and the script
+`unix2dos` (which I installed via `guix`: `guix install unix2dos`).
 
 ## Some discussion of `Formula` specification in the course definition `JSON`
 

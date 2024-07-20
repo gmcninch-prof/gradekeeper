@@ -1,43 +1,45 @@
-CONVERT=../assets/convert.js
-
+CONVERT=/home/george/.local/bin/grade-data.scm
 PD=pandoc --standalone --from markdown  -V linkcolor:red --metadata-file=assets/metadata.yaml 
-
-GK=../build/exec/gradekeeper
-
+GK=gradekeeper
 CSS_DEFAULT="assets/default.css"
 
-VPATH = src:assets
 
-json=Mathxyz-definitions.json
+MJ=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js
+# MJ=http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML
 
-targets=$(wildcard *.md)
-targets_html=$(targets:.md=.html)
-targets_pdf=$(targets:.md=.pdf)
+#--------------------------------------------------------------------------------
+
+ENROLL_CSV=Mathxyz-enrollment.csv
+CANVAS_CSV=Mathxyz-canvas.csv
+
+COURSE_SPEC=Mathxyz-spec.json
+COURSE_DATA=Mathxyz-data.json
+
+targets_md=Mathxyz-2023-2024-Fall.md
+targets_html=$(targets_md:.md=.html)
+targets_pdf=$(targets_md:.md=.pdf)
 
 
+all: convert scores html pdf
 
-all: node convert scores html pdf
+convert: $(COURSE_DATA)
+scores: $(targets_md)
+html: $(targets_html)
+pdf: $(targets_pdf)
+
+$(COURSE_DATA): $(COURSE_SPEC) $(ENROLL_CSV) $(CANVAS_CSV)
+	@unix2dos -q $(ENROLL_CSV)
+	@unix2dos -q $(CANVAS_CSV)
+	$(CONVERT) --enroll $(ENROLL_CSV) --course $(COURSE_SPEC) --canvas $(CANVAS_CSV) --output $(COURSE_DATA)
+
+
+$(targets_md): $(COURSE_SPEC) $(COURSE_DATA)
+	$(GK) --spec $(COURSE_SPEC) --data $(COURSE_DATA)
+
 
 html: $(targets_html)
 
 pdf: $(targets_pdf)
-
-.PHONY = convert
-
-.PHONY=node
-node:
-	npm install csvtojson
-
-convert:
-	@for j in $(json); do $(CONVERT) $$j; done
-
-.PHONY = scores
-
-scores:
-	@for j in $(json); do $(GK) ./$$j; done
-
-
-MJ=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js
 
 %.html: %.md  
 	$(PD) $<  --css=$(CSS_DEFAULT) --mathjax=$(MJ) --to html  -o $@
