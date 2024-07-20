@@ -2,7 +2,7 @@
 exec guile -e main -s "$0" "$@"
 !#
 ;;--------------------------------------------------------------------------------
-;; Time-stamp: <2024-07-20 Sat 11:59 EDT - george@valhalla>
+;; Time-stamp: <2024-07-20 Sat 14:07 EDT - george@valhalla>
 ;;
 
 (use-modules (csv-to-json)
@@ -99,12 +99,12 @@ exec guile -e main -s "$0" "$@"
 			  `(("label"   . ,label)
 			    ("value"   . ,result))))
 		      (vector->list canvas-spec))))
-    (format (current-error-port) "~a\n" (assoc-ref rec "Name"))
+;;    (format (current-error-port) "Name: ~a\n" (assoc-ref rec "Name"))
     `(("name"    . ,(assoc-ref rec "Name"))
       ("id"      . ,(assoc-ref rec "ID"))
-      ("email"   . ,(assoc-ref rec "Email"))
-      ("level"   . ,(assoc-ref rec "Acad Level"))
-      ("school"  . ,(assoc-ref rec "Program Descr"))
+      ("email"   . ,(or (assoc-ref rec "Email")""))
+      ("level"   . ,(or (assoc-ref rec "Acad Level") (assoc-ref rec "Level") ""))
+      ("school"  . ,(or (assoc-ref rec "Program Descr") (assoc-ref rec "Program and Plan") ""))
       ("majors"  . ,majors)      
       ("section" . ,sections)
       ("outcomes". ,(mk-outcomes results)))
