@@ -1,0 +1,134 @@
+[
+  {
+    "name": "Brown, Penny",
+    "id": "1234",
+    "email": "Penny.Brown@faketufts.edu",
+    "level": "Sophomore",
+    "school": "School of Engineering",
+    "majors": [
+      "Data Science (BSDS)"
+    ],
+    "section": [
+      "Fa23-MATH-xyz-01-Math on Mars",
+      "Fa23-MATH-xyz-R01-Math on Mars"
+    ],
+    "outcomes": [
+      {
+        "label": "final exam",
+        "value": {
+          "score": 90
+        }
+      },
+      {
+        "label": "midterm1",
+        "value": {
+          "score": 97
+        }
+      },
+      {
+        "label": "midterm2",
+        "value": {
+          "score": 88
+        }
+      },
+      {
+        "label": "problemsets",
+        "value": {
+          "scores": [
+            92.5,
+            97.14285714285714,
+            100
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "name": "Kirk, James",
+    "id": "1235",
+    "email": "James.Kirk@faketufts.edu",
+    "level": "Sophomore",
+    "school": "School of Engineering",
+    "majors": [
+      "Mechanical Engineering (BSME)"
+    ],
+    "section": [
+      "Fa23-MATH-xyz-01-Math on Mars",
+      "Fa23-MATH-xyz-R01-Math on Mars"
+    ],
+    "outcomes": [
+      {
+        "label": "final exam",
+        "value": {
+          "score": 80
+        }
+      },
+      {
+        "label": "midterm1",
+        "value": {
+          "score": 85
+        }
+      },
+      {
+        "label": "midterm2",
+        "value": {
+          "score": 85
+        }
+      },
+      {
+        "label": "problemsets",
+        "value": {
+          "scores": [
+            100,
+            94.28571428571429,
+            100
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "name": "Lemon, Lisa",
+    "id": "1236",
+    "email": "Lisa.Lemon@faketufts.edu",
+    "level": "Sophomore",
+    "school": "School of Engineering",
+    "majors": [
+      "Mechanical Engineering (BSME)"
+    ],
+    "section": [
+      "Fa23-MATH-xyz-01-Math on Mars",
+      "Fa23-MATH-xyz-R02-Math on Mars"
+    ],
+    "outcomes": [
+      {
+        "label": "final exam",
+        "value": {
+          "score": 88
+        }
+      },
+      {
+        "label": "midterm1",
+        "value": {
+          "score": 0
+        }
+      },
+      {
+        "label": "midterm2",
+        "value": {
+          "score": 92
+        }
+      },
+      {
+        "label": "problemsets",
+        "value": {
+          "scores": [
+            77.5,
+            94.28571428571429,
+            100
+          ]
+        }
+      }
+    ]
+  }
+]

@@ -1,0 +1,51 @@
+html {
+    font-family: sans-serif;
+    font-size: 15px;
+    width: 80%;
+    margin-left: 10%;
+    margin-right: 10%;
+}
+
+body { /* margin-left: 50px; */
+       width: 90%;
+       margin: 5%;
+       color: navy;
+     }
+
+.title, .author, .date { text-align: center; }
+
+table th + th { border-left:2px solid navy;}
+th { border-bottom: 2px solid navy;
+     border-collapse: collapse; }
+
+table td + td { border-left:1px solid navy;}
+
+td { border-bottom:1px solid navy;
+     border-collapse: collapse; }
+
+.title-slide h1 { text-align: center;
+		  font-family: Palatino;
+		  border-bottom: 1px solid navy;}
+
+.image-container {
+    text-align: center;
+}
+
+.solution {
+    padding: 5px 5px 5px 5px;
+    color: darkred;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    border: 1px solid navy;}
+
+
+
+.proof {
+    background: #8B8B8B;
+    padding: 3%
+}
+
+
+.theoremnos dt {
+    font-weight: bold;
+}

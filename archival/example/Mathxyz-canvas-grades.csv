@@ -1,0 +1,7 @@
+Student,ID,SIS User ID,SIS Login ID,Integration ID,Section,ProblemSet 01 (444),ProblemSet 02 (555),ProblemSet 03 (666),Midterm 1 (222),Midterm 2 (333),Final exam (111)
+,,,,,,Manual Posting,Manual Posting,Manual Posting,Manual Posting,Manual Posting,Manual Posting
+    Points Possible,,,,,,40.00,35.00,35.00,100.0,100.0,100.0
+"Brown, Penny",9999,brownp1,brownp1,1234,Fa23-MATH-xyz-01-Math on Mars and Fa23-MATH-xyz-R01-Math on Mars,37.00,34.00,35.00,97.00,88.00,90.00
+"Kirk, James",9999,jkirk1,jkirk1,1235,Fa23-MATH-xyz-01-Math on Mars and Fa23-MATH-xyz-R01-Math on Mars,40.00,33.00,35.00,85.00,85.00,80.00
+"Lemon, Lisa",9999,llemon1,llemon1,1236,Fa23-MATH-xyz-01-Math on Mars and Fa23-MATH-xyz-R02-Math on Mars,31.00,33.00,35.00,,92.00,88.00
+
