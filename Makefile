@@ -1,16 +1,17 @@
 
-
 LIBDIR = /home/george/Code/lib
-SCRIPTDIR = /home/george/assets/admin-code
-BINDIR = /home/george/.local/bin
+INSTALLDIR = $(HOME)/.local/bin
+
+all: idris
+
+install: $INSTALLDIR/grade-data.scm $INSTALLDIR/gradekeeper
 
 
-all: scripts idris
+$INSTALLDIR/grade-data.scm: src-guile/grade-data.scm
+	cp src-guile/grade-data.scm $(INSTALLDIR)
 
-.PHONY = scripts
-scripts: 
-	cp assets/gradekeeper $(SCRIPTDIR)
-	cp assets/grade-data.scm $(BINDIR)
+$INSTALLDIR/gradekeeper: assets/gradekeeper
+	cp assets/gradekeeper $(INSTALLDIR)
 
 libtime_wrappers.so: $(wrapper_src)
 	cc -shared $< -o $@

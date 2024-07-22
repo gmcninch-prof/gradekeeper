@@ -2,21 +2,58 @@
 exec guile -e main -s "$0" "$@"
 !#
 ;;--------------------------------------------------------------------------------
-;; Time-stamp: <2024-07-20 Sat 14:07 EDT - george@valhalla>
+;; Time-stamp: <2024-07-21 Sun 17:19 EDT - george@valhalla>
 ;;
 
-(use-modules (csv-to-json)
-	     (json)
+(use-modules (json)
 	     (ice-9 format)
 	     (ice-9 getopt-long)
 	     (srfi srfi-1))
 
-
 ;; --------------------------------------------------------------------------------
 
+(define (csv-file->scm filename)
+  (dsv->scm
+   (open-input-file filename)
+   #\,
+   #:format 'rfc4180
+   ))
 
-(define (last sexp)
-  (car (reverse sexp)))
+
+;; the scm->json procudure wants a *vector* of alist records as its argument
+;; 
+(define (mk-vect-alist headers contents)
+  (list->vector
+   (map
+    (lambda (c) (map cons headers c))
+    contents)))
+
+(define* (extract-headers-mk-vect-alist contents #:key (head 0) (start 1))
+  (mk-vect-alist
+   (list-ref contents head)
+   (drop contents start)))
+
+(define* (csv-file->vect-alist filename #:key (head 0) (start 1))
+  (extract-headers-mk-vect-alist
+   (csv-file->scm filename)
+   #:head head
+   #:start start))
+
+(define* (csv-file->json-file csv-filename json-filename #:key (head 0) (start 1))
+  (with-output-to-file json-filename
+    (lambda ()
+      (scm->json (csv-file->vect-alist csv-filename #:head head #:start start)
+		 #:pretty #t))))
+
+
+(define* (mk-map vect-alist field)
+  (map
+   (lambda (rec) ((cons (assoc-ref rec field) rec)))
+   (vector->list vect-alist)
+   ))
+
+
+;; --------------------------------------------------------------------------------
 
 (define (initial sexp)
   (reverse (cdr (reverse sexp))))
@@ -128,10 +165,10 @@ exec guile -e main -s "$0" "$@"
     (if course-spec
 	(let*
 	    ((canvas-spec    (assoc-ref course-spec "CanvasSpec"))
-	     (canvas-map     (map
-			      (lambda (rec) (cons (assoc-ref rec "Integration ID") rec))
-			      (vector->list (csv-file->sxml canvas-csv #:start 2))))
-	     (enroll         (csv-file->sxml enroll-csv))
+	     (canvas-map     (mk-map
+			      (vector->list (csv-file->vect-alist canvas-csv #:start 2))
+			      "Integration ID"))
+	     (enroll         (csv-file->vect-alist enroll-csv))
 	     )
 	  ;; (for-each
 	  ;;  (lambda (rec)
