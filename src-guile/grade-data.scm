@@ -2,10 +2,11 @@
 exec guile -e main -s "$0" "$@"
 !#
 ;;--------------------------------------------------------------------------------
-;; Time-stamp: <2024-07-21 Sun 17:19 EDT - george@valhalla>
+;; Time-stamp: <2024-07-21 Sun 20:30 EDT - george@valhalla>
 ;;
 
 (use-modules (json)
+	     (dsv)
 	     (ice-9 format)
 	     (ice-9 getopt-long)
 	     (srfi srfi-1))
@@ -48,7 +49,7 @@ exec guile -e main -s "$0" "$@"
 
 (define* (mk-map vect-alist field)
   (map
-   (lambda (rec) ((cons (assoc-ref rec field) rec)))
+   (lambda (rec) (cons (assoc-ref rec field) rec))
    (vector->list vect-alist)
    ))
 
@@ -166,7 +167,7 @@ exec guile -e main -s "$0" "$@"
 	(let*
 	    ((canvas-spec    (assoc-ref course-spec "CanvasSpec"))
 	     (canvas-map     (mk-map
-			      (vector->list (csv-file->vect-alist canvas-csv #:start 2))
+			      (csv-file->vect-alist canvas-csv #:start 2)
 			      "Integration ID"))
 	     (enroll         (csv-file->vect-alist enroll-csv))
 	     )
