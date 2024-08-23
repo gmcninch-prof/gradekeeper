@@ -27,7 +27,7 @@ import Data.List
 courseReport : Reader State MD
 courseReport = do
   state <- ask
-  let resultstate : ResultState = runReader state getResultState 
+  let resultstate : State = runReader state getResultState 
   let report : MD = runReader resultstate mkCourseReport 
   pure report 
     
@@ -38,11 +38,6 @@ runReports courseFile dataFile = do
   case stateE of
        (Left err) => pure $ Left err
        (Right state) => pure $ Right $ runReader state courseReport 
-       
-         -- case state.course.status of
-         --   Finished => pure $ Left $ "course \{show state.course.semester} \{state.course.title} completed"
-         --   Current => pure $ Right $ runReader state courseReport 
-
 
 public export
 write : Either String MD -> IO ()
@@ -65,8 +60,6 @@ optionData = MkOpt { shortNames = ['d']
                    , argDescr =  (ReqArg id "CourseData") 
                    , description = "filename for course data"
                    }
- 
- 
  
 main : IO ()
 main =  do

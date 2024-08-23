@@ -1,6 +1,6 @@
 module Stats
 
-import Student
+import CourseData
 import Data.Maybe
 import Data.SortedMap
 import Data.String 
@@ -11,11 +11,13 @@ import Data.List1
 import Control.Ord
 
 export 
-gradeMatch : (grade : String) -> ( student : StudentResult) -> Bool
+gradeMatch : (grade : String) -> ( student : StudentData) -> Bool
 gradeMatch grade student = 
-  case lookup grade gradeMap of
-    Nothing => False
-    (Just gg) => elem student.grade gg
+  case student.grade of
+       Nothing => False
+       (Just g) => case lookup grade gradeMap of
+                        Nothing => False
+                        (Just gg) => elem g gg
   where
     gradeMap : SortedMap String (List String)
     gradeMap = fromList [ ("A", [ "A+", "A", "A-" ] )
@@ -26,30 +28,30 @@ gradeMatch grade student =
                         ]
 
 export
-getMajors: List StudentResult -> List String
+getMajors: List StudentData -> List String
 getMajors students = sort $ nub $ concat $ (.majors) <$> students
 
 export
-matchMajor : String -> (student : StudentResult) -> Bool
+matchMajor : String -> (student : StudentData) -> Bool
 matchMajor major student = major `elem` student.majors
 
 
 export 
-engineer : (student : StudentResult) -> Bool
+engineer : (student : StudentData) -> Bool
 engineer student = isInfixOf "Engineering" $ student.school
 
 export 
-artsSciences : (Student : StudentResult) -> Bool
+artsSciences : (Student : StudentData) -> Bool
 artsSciences student = isInfixOf "Arts & Sciences" $ student.school
 
 
 
 export 
-studentClass : (className : String) -> StudentResult -> Bool
+studentClass : (className : String) -> StudentData -> Bool
 studentClass className student = className == student.level
 
 export 
-countPred : (pred : StudentResult -> Bool) -> ( sl : List StudentResult) -> Nat
+countPred : (pred : StudentData -> Bool) -> ( sl : List StudentData) -> Nat
 countPred pred sl = length $ filter pred sl
 
 export

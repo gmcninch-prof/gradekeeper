@@ -39,20 +39,20 @@ implementation Ord Grade where
   compare Incomplete Failing = LT
 
 export
-letterGrades : List Grade
-letterGrades = [ MkGrade "A+" 98.0
-               , MkGrade "A"  92.5
-               , MkGrade "A-" 89.5
-               , MkGrade "B+" 86.5
-               , MkGrade "B"  82.5
-               , MkGrade "B-" 79.5
-               , MkGrade "C+" 76.5
-               , MkGrade "C"  72.5
-               , MkGrade "C-" 69.5
-               , MkGrade "D+" 66.5
-               , MkGrade "D"  62.5
-               , MkGrade "D-" 59.5
-               ]
+defaultLetterGrades : List Grade
+defaultLetterGrades = [ MkGrade "A+" 98.0
+                      , MkGrade "A"  92.5
+                      , MkGrade "A-" 89.5
+                      , MkGrade "B+" 86.5
+                      , MkGrade "B"  82.5
+                      , MkGrade "B-" 79.5
+                      , MkGrade "C+" 76.5
+                      , MkGrade "C"  72.5
+                      , MkGrade "C-" 69.5
+                      , MkGrade "D+" 66.5
+                      , MkGrade "D"  62.5
+                      , MkGrade "D-" 59.5
+                      ]
               
 
 export               

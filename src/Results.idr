@@ -110,75 +110,71 @@ scoreForFormula course outcomes formula =  do
       
   pure $ dotProduct w scores
 
-
 export
 getFormulasForStudent : (studentId : String) -> Reader State (List Formula)
-getFormulas studentId =  do
+getFormulasForStudent studentId =  do
   state <- ask
   let course: Course = state.course
 
       fmap : SortedMap String Formula
-      fmap = fromList $ (\f => (f.id,f)) <$> course.formulas
+      fmap = fromList $ (\f => (f.id,f)) <$> course.formulas ++ course.exceptFormulas
 
       getFormula : String -> Maybe Formula
       getFormula id = lookup id fmap
         
       emap : SortedMap String StudentException
-      emap = fromList $ (\e => (e.id,e)) <$> course.exceptions
+      emap = fromList $ (\e => (e.id,e)) <$> course.exceptions  
+        
   case lookup studentId emap of
-    Nothing => pure $ mapMaybe getFormula course.gradingFormulas
+    Nothing => pure $ course.formulas
     Just se => pure $ mapMaybe getFormula se.formulas  
 
--- isIncomplete : IsCourse st => (studentId : String) -> Reader st Bool
--- isIncomplete studentId = do
---   s <- ask
---   let exceptions : List StudentException = cexceptions s
+isIncomplete : (studentId : String) -> Reader State Bool
+isIncomplete studentId = do
+  state <- ask
+  let course = state.course
+      exceptions = course.exceptions
   
---       emap : SortedMap String StudentException
---       emap = fromList $ (\e => (e.id,e)) <$> exceptions
---   case lookup studentId emap of
---        Nothing => pure False
---        Just se => pure se.incomplete
+      emap : SortedMap String StudentException
+      emap = fromList $ (\e => (e.id,e)) <$> exceptions
+  case lookup studentId emap of
+       Nothing => pure False
+       Just se => pure se.incomplete
   
 
--- export
--- result : (student:StudentData) -> Reader State StudentResult
--- result student = do
---   state <- ask
+export
+result : (student:StudentData) -> Reader State StudentData
+result student = do
+  state <- ask
   
---   formulas <- getFormulas student.id
+  formulas <- getFormulasForStudent student.id
   
---   incomplete <- isIncomplete student.id  
+  incomplete <- isIncomplete student.id  
 
---   let course : Course = State.State.(.course) state
---       results : Maybe (List Double) =  traverse (scoreForFormula course student.outcomes) formulas
---       score = case round 2 <$> (results >>= maxL) of
---                    Nothing => 0
---                    Just sc => sc
+  let course : Course = State.State.(.course) state
+      results : Maybe (List Double) =  traverse (scoreForFormula course student.outcomes) formulas
+      
+      score : Double
+      score = case round 2 <$> (results >>= maxL) of
+                   Nothing => 0
+                   Just sc => sc
                    
---       lg = case course.grades of
---                 Nothing => letterGrades
---                 (Just x) => x
+      lg = case course.grades of
+                Nothing => defaultLetterGrades
+                (Just x) => x
 
---       grade  = if incomplete then show Incomplete else computeGrade lg score
---   pure $ MkStudentResult { name = student.name
---                          , id = student.id
---                          , section = student.section
---                          , email = student.email
---                          , level = student.level
---                          , school = student.school
---                          , majors = student.majors
---                          , courseScore = score
---                          , grade = grade
---                          , outcomes = student.outcomes
---                          }
+      grade : String
+      grade  = if incomplete then "Incomplete" else computeGrade lg score
+  pure $ { courseScore := Just score
+         , grade := Just grade
+         } student
   
     
 
 
--- public export
--- getResultState : Reader State ResultState
--- getResultState = do
---   state <- ask
---   studentResults <- traverse result state.studentdata
---   pure $ MkResultState state.date state.course state.exceptions studentResults
+public export
+getResultState : Reader State State
+getResultState = do
+  state <- ask
+  studentResults <- traverse result state.studentdata
+  pure $ { studentdata :=studentResults } state

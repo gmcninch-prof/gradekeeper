@@ -135,6 +135,8 @@ record Outcome where
 
 %runElab derive "Outcome" [ Show, Eq, myToJSON, myFromJSON ]
 
+
+
 public export
 record StudentData where
   constructor MkStudentData
