@@ -2,13 +2,14 @@
 exec guile -e main -s "$0" "$@"
 !#
 ;;--------------------------------------------------------------------------------
-;; Time-stamp: <2024-07-21 Sun 20:30 EDT - george@valhalla>
+;; Time-stamp: <2024-08-22 Thu 12:20 EDT - george@valhalla>
 ;;
 
 (use-modules (json)
 	     (dsv)
 	     (ice-9 format)
 	     (ice-9 getopt-long)
+	     (ice-9 pretty-print)
 	     (srfi srfi-1))
 
 ;; --------------------------------------------------------------------------------
@@ -23,18 +24,17 @@ exec guile -e main -s "$0" "$@"
 
 ;; the scm->json procudure wants a *vector* of alist records as its argument
 ;; 
-(define (mk-vect-alist headers contents)
-  (list->vector
-   (map
-    (lambda (c) (map cons headers c))
-    contents)))
+(define (mk-alist headers contents)
+  (map
+   (lambda (c) (map cons headers c))
+   contents))
 
 (define* (extract-headers-mk-vect-alist contents #:key (head 0) (start 1))
-  (mk-vect-alist
+  (mk-alist
    (list-ref contents head)
    (drop contents start)))
 
-(define* (csv-file->vect-alist filename #:key (head 0) (start 1))
+(define* (csv-file->alist filename #:key (head 0) (start 1))
   (extract-headers-mk-vect-alist
    (csv-file->scm filename)
    #:head head
@@ -43,15 +43,14 @@ exec guile -e main -s "$0" "$@"
 (define* (csv-file->json-file csv-filename json-filename #:key (head 0) (start 1))
   (with-output-to-file json-filename
     (lambda ()
-      (scm->json (csv-file->vect-alist csv-filename #:head head #:start start)
+      (scm->json (list->vector (csv-file->alist csv-filename #:head head #:start start))
 		 #:pretty #t))))
 
 
-(define* (mk-map vect-alist field)
+(define* (mk-map alist field)
   (map
    (lambda (rec) (cons (assoc-ref rec field) rec))
-   (vector->list vect-alist)
-   ))
+   alist))
 
 
 ;; --------------------------------------------------------------------------------
@@ -99,27 +98,15 @@ exec guile -e main -s "$0" "$@"
       ((id (assoc-ref rec "ID")))
     (assoc-ref canvas-map id)))
 
-
-(define (mk-outcomes results)
+(define (get-score maxes record heading)
   (let
-      ((labels (delete-duplicates (map (lambda (r) (assoc-ref r "label")) results))))
-    (list->vector
-     (map
-      (lambda (lab)
-	(let
-	    ((lresults (filter (lambda (r) (equal? lab (assoc-ref r "label"))) results)))
-	  `(("label" . ,lab)
-	    ("value" . 
-	     ,(if (= 1 (length lresults))
-		  `(("score"  . ,(assoc-ref (car lresults) "value")))
-		  `(("scores" . ,(list->vector (map (lambda (r) (assoc-ref r "value")) lresults))))
-		  ))))
-	)
-      labels))
+      ((max (or (string->number (assoc-ref maxes heading))  1))
+       (raw (or (string->number (assoc-ref record heading)) 0)))
+;;    (format #t "raw ~a max ~a" raw max)
+    (* 100 (/ raw max))
     ))
 
-
-(define (build-student-record canvas-map canvas-spec rec)
+(define (build-student-record maxes canvas-map score-specs rec)
   (let*
       ((crec (canvas-lookup rec canvas-map))
        (sections (list->vector (split-and (assoc-ref crec "Section"))))
@@ -127,25 +114,26 @@ exec guile -e main -s "$0" "$@"
 				    (string-split
 				     (or (assoc-ref rec "Plan(s)") (assoc-ref rec "Program and Plan"))
 				     #\,))))
-       (results  (map (lambda (c)
-			(let*
-			    ((label (assoc-ref c "label"))
-			     (heading (assoc-ref c "heading"))
-			     (max     (assoc-ref c "max"))
-			     (raw     (string->number (or (assoc-ref crec heading) "0")))
-			     (result  (* 100 (/ (or  raw 0) max))))
-			  `(("label"   . ,label)
-			    ("value"   . ,result))))
-		      (vector->list canvas-spec))))
-;;    (format (current-error-port) "Name: ~a\n" (assoc-ref rec "Name"))
-    `(("name"    . ,(assoc-ref rec "Name"))
-      ("id"      . ,(assoc-ref rec "ID"))
-      ("email"   . ,(or (assoc-ref rec "Email")""))
-      ("level"   . ,(or (assoc-ref rec "Acad Level") (assoc-ref rec "Level") ""))
-      ("school"  . ,(or (assoc-ref rec "Program Descr") (assoc-ref rec "Program and Plan") ""))
-      ("majors"  . ,majors)      
-      ("section" . ,sections)
-      ("outcomes". ,(mk-outcomes results)))
+       (outcomes  (list->vector
+		   (map (lambda (score-spec)
+			  (let*
+			      ((score-name (assoc-ref score-spec "scorename"))
+			       (items (assoc-ref score-spec "items"))
+			       (marks (map
+				       (lambda (heading) (get-score maxes crec heading))
+				       (vector->list (assoc-ref score-spec "items")))))
+			    `(("scorename" . ,score-name)
+			      ("marks"    . ,(list->vector marks)))))
+			(vector->list score-specs)))))
+    ;;    (format (current-error-port) "Name: ~a\n" (assoc-ref rec "Name"))
+    `(("name"     . ,(assoc-ref rec "Name"))
+      ("id"       . ,(assoc-ref rec "ID"))
+      ("email"    . ,(or (assoc-ref rec "Email")""))
+      ("level"    . ,(or (assoc-ref rec "Acad Level") (assoc-ref rec "Level") ""))
+      ("school"   . ,(or (assoc-ref rec "Program Descr") (assoc-ref rec "Program and Plan") ""))
+      ("majors"   . ,majors)      
+      ("section"  . ,sections)
+      ("outcomes" . ,outcomes))
     ))
 
 ;; --------------------------------------------------------------------------------
@@ -165,32 +153,38 @@ exec guile -e main -s "$0" "$@"
        (output         (option-ref options 'output #f)))
     (if course-spec
 	(let*
-	    ((canvas-spec    (assoc-ref course-spec "CanvasSpec"))
+	    ((scores-specs   (assoc-ref course-spec "scorespecs"))
+	     (canvas-alist   (csv-file->alist canvas-csv #:start 2))
+	     (maxes          (car canvas-alist))
 	     (canvas-map     (mk-map
-			      (csv-file->vect-alist canvas-csv #:start 2)
+			      (cdr canvas-alist)
 			      "Integration ID"))
-	     (enroll         (csv-file->vect-alist enroll-csv))
+	     (enroll-data    (csv-file->alist enroll-csv))
 	     )
 	  ;; (for-each
 	  ;;  (lambda (rec)
 	  ;;    (format (current-error-port) "~s\n\n" rec))
-	  ;;  (vector->list enroll))
+	  ;;  (vector->list enroll-data))
 	  (if output
+	      ;; (for-each
+	      ;;  (lambda (rec)
+	      ;; 	 (format #t "result for rec ~s\n" rec)
+	      ;; 	 (pretty-print(build-student-record maxes canvas-map scores-specs rec)))
+	         
+	      ;;  enroll-data)
+		  
 	      (with-output-to-file output
 		(lambda ()
 		  (scm->json
 		   (list->vector
 		    (map
 		     (lambda (rec)
-		       (build-student-record canvas-map canvas-spec rec))
-		     (vector->list enroll)
-		     ))
+		       (build-student-record maxes canvas-map scores-specs rec))
+		     enroll-data))
 		   #:pretty #t)))
-	      (format #t "No output file specified"))
-	  )
-	)
-    )
-  )
+	      (format #t "No output file specified")
+	      
+	  )))))
 
 ;; Local Variables:
 ;; mode: scheme

@@ -3,14 +3,13 @@ module App
 import Control.Monad.Reader
 import Control.Monad.Identity
 import Data.List
-import JSON.Derive
+import JSON.Simple.Derive
 import System
 import System.File.ReadWrite
 import System.Console.GetOpt
 
-import Course
+import CourseData
 import IdrisTime
-import Student
 import Md
 import Reports 
 import Results

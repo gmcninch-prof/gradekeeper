@@ -5,13 +5,12 @@ import Control.Monad.Identity
 import Data.SortedMap
 import Data.List
 import Data.Vect
-
+import Data.SortedMap
 
 import LetterGrades
 import Util
-import Course
+import CourseData
 import State
-import Student
 
 
 
@@ -31,12 +30,24 @@ dropAndAverage num dbls = average pruned
     pruned : List Double
     pruned = let (_,p) = splitAt num sorted in p
     
-  
-outcomeScore : (course : Course) -> (outcome:Outcome) -> (avg:List Double -> Double) -> Double
-outcomeScore course outcome avg = case outcome.value of
-                                       (Score score) => score
-                                       (ListScores scores) => avg scores
 
+getDrops : (course : Course) -> (scoreName : String) -> Nat
+getDrops course scoreName = 
+  case lookup scoreName scoreMap of
+       Nothing => 0
+       (Just x) => case x.drops of
+                        Nothing => 0
+                        (Just y) => y
+  where
+    scoreMap : SortedMap String Score
+    scoreMap = fromList $ (\score => (score.scoreName,score)) <$> course.scores
+
+outcomeScore : (course : Course) -> (outcome:Outcome) -> Double
+outcomeScore course outcome = dropAndAverage drops outcome.marks
+  where
+    drops : Nat
+    drops = getDrops course outcome.scoreName
+    
 export
 maxL : Ord a => List a -> Maybe a
 maxL [] = Nothing
@@ -53,78 +64,58 @@ minL (x :: xs) = do
        Nothing => pure x
        (Just y) => pure $ min x y
 
-public export
-getRawOutcomeByLabel : (outs: List Outcome) -> (label : String) -> Maybe Outcome
-getRawOutcomeByLabel outs label =
-  lookup label studentOutcomes
+formulaComponentScore : (course : Course) -> (outcomes : List Outcome) -> FormulaComponent -> Maybe Double
+formulaComponentScore course outcomes fc = 
+  case fc.component of
+       (Value scoreName) => do
+         outcome <- lookup scoreName outcomeMap
+         pure $ outcomeScore course outcome 
+       (Max sn1 sn2) => do
+         s1 <- outcomeScore course <$> lookup sn1 outcomeMap
+         s2 <- outcomeScore course <$> lookup sn2 outcomeMap
+         pure $ max s1 s2 
+       (Min sn1 sn2) => do
+         s1 <- outcomeScore course <$> lookup sn1 outcomeMap
+         s2 <- outcomeScore course <$> lookup sn2 outcomeMap
+         pure $ min s1 s2 
+       (Maxl snl) => do
+         outcomes <- traverse (\sn => lookup sn outcomeMap) snl
+         let sl = outcomeScore course <$> outcomes
+         maxL sl
+       (Minl snl) => do
+         outcomes <- traverse (\sn => lookup sn outcomeMap) snl
+         let sl = outcomeScore course <$> outcomes
+         minL sl
   where
-    studentOutcomes : SortedMap String Outcome
-    studentOutcomes = fromList $ map (\res => (res.label,res)) outs
-
-
-public export
-getOutcomeByLabel : (course: Course) -> (outs : List Outcome) -> (label : String) -> Maybe Double
-getOutcomeByLabel course outs label = do 
-  outcome <- lookup label studentOutcomes
-  case lookup label courseStrategies of
-       Nothing => 
-         Just $ outcomeScore course outcome average
-       (Just (MkComputeStrategy str Average)) => 
-         Just $ outcomeScore course outcome average
-       (Just (MkComputeStrategy str (DropAndAverage num))) => 
-         Just $ outcomeScore course outcome (dropAndAverage num)
-  where
-    studentOutcomes : SortedMap String Outcome
-    studentOutcomes = fromList $ map (\res => (res.label,res)) outs
-    
-    courseStrategies : SortedMap String ComputeStrategy
-    courseStrategies = fromList $ map (\strat => (strat.label,strat)) course.strategies
-
-
-export
-componentScore : (course : Course) -> (outcomes : List Outcome) -> (component : ScoreComponent)  -> Maybe Double
-componentScore course outcomes (MkScoreComponent compName computation weight) = 
-  case computation of
-       (Copy label) => getOutcomeByLabel course outcomes label 
-       (Max labels) => do
-         r <- traverse (getOutcomeByLabel course outcomes) labels
-         maxL r
-       (Min labels) => do
-         r <- traverse (getOutcomeByLabel course outcomes) labels
-         minL r
+    outcomeMap : SortedMap String Outcome
+    outcomeMap = fromList $ (\outcome => (outcome.scoreName,outcome)) <$> outcomes
 
 
 export
 dotProduct : Vect n Double -> Vect n Double -> Double
 dotProduct xs ys = sum $ zipWith (*) xs ys
 
-
 export
 scoreForFormula : (course : Course) -> (outcomes : List Outcome) -> Formula -> Maybe Double
-scoreForFormula course outcomes (MkFormula id comps) = do
-  ss <- scores {comps}
-  pure $ dotProduct weights ss 
-  where
-    getWt : ScoreComponent -> Double
-    getWt comp = comp.weight
-
-    scores : (comps: List ScoreComponent) -> Maybe (Vect (length comps) Double)
-    scores comps = do
-      traverse (componentScore course outcomes) compsV
-      where
-        compsV : Vect (length comps) ScoreComponent
-        compsV =fromList comps
-
-    weights : {comps: List ScoreComponent} -> Vect (length comps) Double
-    weights {comps} = getWt <$> fromList comps
+scoreForFormula course outcomes formula =  do
+  let comps = formula.formulaComponents
+      
+      fcs : Vect (length comps) FormulaComponent
+      fcs = Data.Vect.fromList comps
+      
+      w : Vect (length comps) Double
+      w = (\fc => fc.weight) <$> fcs
+      
+  scores <- traverse (formulaComponentScore course outcomes) fcs
+      
+  pure $ dotProduct w scores
 
 
 export
-getFormulas : IsCourse st => (studentId : String) -> Reader st (List Formula)
+getFormulasForStudent : (studentId : String) -> Reader State (List Formula)
 getFormulas studentId =  do
-  s <- ask
-  let course: Course = ccourse s
-      exceptions: List StudentException = cexceptions s
+  state <- ask
+  let course: Course = state.course
 
       fmap : SortedMap String Formula
       fmap = fromList $ (\f => (f.id,f)) <$> course.formulas
@@ -133,61 +124,61 @@ getFormulas studentId =  do
       getFormula id = lookup id fmap
         
       emap : SortedMap String StudentException
-      emap = fromList $ (\e => (e.id,e)) <$> exceptions
+      emap = fromList $ (\e => (e.id,e)) <$> course.exceptions
   case lookup studentId emap of
     Nothing => pure $ mapMaybe getFormula course.gradingFormulas
     Just se => pure $ mapMaybe getFormula se.formulas  
 
-isIncomplete : IsCourse st => (studentId : String) -> Reader st Bool
-isIncomplete studentId = do
-  s <- ask
-  let exceptions : List StudentException = cexceptions s
+-- isIncomplete : IsCourse st => (studentId : String) -> Reader st Bool
+-- isIncomplete studentId = do
+--   s <- ask
+--   let exceptions : List StudentException = cexceptions s
   
-      emap : SortedMap String StudentException
-      emap = fromList $ (\e => (e.id,e)) <$> exceptions
-  case lookup studentId emap of
-       Nothing => pure False
-       Just se => pure se.incomplete
+--       emap : SortedMap String StudentException
+--       emap = fromList $ (\e => (e.id,e)) <$> exceptions
+--   case lookup studentId emap of
+--        Nothing => pure False
+--        Just se => pure se.incomplete
   
 
-export
-result : (student:StudentData) -> Reader State StudentResult
-result student = do
-  state <- ask
+-- export
+-- result : (student:StudentData) -> Reader State StudentResult
+-- result student = do
+--   state <- ask
   
-  formulas <- getFormulas student.id
+--   formulas <- getFormulas student.id
   
-  incomplete <- isIncomplete student.id  
+--   incomplete <- isIncomplete student.id  
 
-  let course : Course = State.State.(.course) state
-      results : Maybe (List Double) =  traverse (scoreForFormula course student.outcomes) formulas
-      score = case round 2 <$> (results >>= maxL) of
-                   Nothing => 0
-                   Just sc => sc
+--   let course : Course = State.State.(.course) state
+--       results : Maybe (List Double) =  traverse (scoreForFormula course student.outcomes) formulas
+--       score = case round 2 <$> (results >>= maxL) of
+--                    Nothing => 0
+--                    Just sc => sc
                    
-      lg = case course.grades of
-                Nothing => letterGrades
-                (Just x) => x
+--       lg = case course.grades of
+--                 Nothing => letterGrades
+--                 (Just x) => x
 
-      grade  = if incomplete then show Incomplete else computeGrade lg score
-  pure $ MkStudentResult { name = student.name
-                         , id = student.id
-                         , section = student.section
-                         , email = student.email
-                         , level = student.level
-                         , school = student.school
-                         , majors = student.majors
-                         , courseScore = score
-                         , grade = grade
-                         , outcomes = student.outcomes
-                         }
+--       grade  = if incomplete then show Incomplete else computeGrade lg score
+--   pure $ MkStudentResult { name = student.name
+--                          , id = student.id
+--                          , section = student.section
+--                          , email = student.email
+--                          , level = student.level
+--                          , school = student.school
+--                          , majors = student.majors
+--                          , courseScore = score
+--                          , grade = grade
+--                          , outcomes = student.outcomes
+--                          }
   
     
 
 
-public export
-getResultState : Reader State ResultState
-getResultState = do
-  state <- ask
-  studentResults <- traverse result state.studentdata
-  pure $ MkResultState state.date state.course state.exceptions studentResults
+-- public export
+-- getResultState : Reader State ResultState
+-- getResultState = do
+--   state <- ask
+--   studentResults <- traverse result state.studentdata
+--   pure $ MkResultState state.date state.course state.exceptions studentResults

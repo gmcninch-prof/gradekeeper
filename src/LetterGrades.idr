@@ -1,7 +1,7 @@
 module LetterGrades 
 
 import Derive.Prelude
-import JSON.Derive
+import JSON.Simple.Derive
 import Util 
 
 %language ElabReflection
@@ -22,7 +22,7 @@ data Grade : Type where
   Failing : Grade
   Incomplete : Grade
 
-%runElab derive "Grade" [ Show, Eq, customToJSON untaggedOptions, customFromJSON untaggedOptions ]
+%runElab derive "Grade" [ Show, Eq, customToJSON Export untaggedOptions, customFromJSON Export untaggedOptions ]
 
 implementation Show Grade where
   show (MkGrade label min) = label

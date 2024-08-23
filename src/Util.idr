@@ -4,7 +4,7 @@ import Data.Nat
 import Data.Fin
 
 import System.File.ReadWrite
-import JSON.Derive
+import JSON.Simple.Derive
 
 
 public export

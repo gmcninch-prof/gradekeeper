@@ -9,8 +9,7 @@ import Data.List
 import Data.String
 
 import Md
-import Student
-import Course
+import CourseData
 import Results
 import LetterGrades
 import Stats
