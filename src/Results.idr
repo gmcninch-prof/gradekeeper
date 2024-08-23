@@ -42,6 +42,7 @@ getDrops course scoreName =
     scoreMap : SortedMap String Score
     scoreMap = fromList $ (\score => (score.scoreName,score)) <$> course.scores
 
+public export
 outcomeScore : (course : Course) -> (outcome:Outcome) -> Double
 outcomeScore course outcome = dropAndAverage drops outcome.marks
   where
@@ -64,6 +65,7 @@ minL (x :: xs) = do
        Nothing => pure x
        (Just y) => pure $ min x y
 
+public export
 formulaComponentScore : (course : Course) -> (outcomes : List Outcome) -> FormulaComponent -> Maybe Double
 formulaComponentScore course outcomes fc = 
   case fc.component of
@@ -163,8 +165,8 @@ result student = do
                 Nothing => defaultLetterGrades
                 (Just x) => x
 
-      grade : String
-      grade  = if incomplete then "Incomplete" else computeGrade lg score
+      grade : Grade
+      grade  = if incomplete then Incomplete else computeGrade lg score
   pure $ { courseScore := Just score
          , grade := Just grade
          } student

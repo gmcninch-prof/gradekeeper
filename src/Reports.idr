@@ -7,6 +7,7 @@ import Control.Monad.Identity
 import Data.Vect
 import Data.List
 import Data.String
+import Prelude.Interfaces
 
 import Md
 import CourseData
@@ -19,97 +20,83 @@ import State
 import IdrisTime
 
 
-summarizeGrades : (letterGrades : List Grade) -> (students : List StudentData) -> List ( Grade, Nat )
-summarizeGrades letterGrades students = 
-  ?match
-  --summarizeGrade' <$> letterGrades
+
+studentReport : ( student : StudentData ) -> Reader State MDPar
+studentReport student = do
+  state <- ask 
+  let course : Course = state.course    
+  rawFormulas <- getFormulasForStudent student.id
+
+  pure $
+    Section { header = [ Text student.name ]
+            , contents = info
+                         <+> [ outcomes course ] 
+                         <+>  (markupFormula course <$> rawFormulas)
+                         <+>  grades
+                         <+> intersperse (Normal [ Text "" ] ) (topLink <$> student.section) 
+                         <+> [ Normal [ Text "\\newpage" ]                       
+                             , Normal [ Text "" ]
+                             , Normal [ Text "-----" ]
+                             ]
+            , id = Just student.id
+            }
+
   where
-    results : Maybe (List String)
-    results = traverse .grade students
-  
-    -- summarizeGrade' : Grade -> ( Grade, Nat )
-    -- summarizeGrade' grade = 
-
---      (grade, countGrades letterGrades grade (courseScore <$> results))
-
-
--- studentReport : ( student : StudentData ) -> Reader ResultState MDPar
--- studentReport student = do
---   state <- ask 
---   let course : Course = state.course    
---   rawFormulas <- getFormulas student.id
-
---   pure $
---     Section { header = [ Text student.name ]
---             , contents = info
---                          <+> [ outcomes course ] 
---                          <+>  (markupFormula course <$> rawFormulas)
---                          <+>  grades
---                          <+> intersperse (Normal [ Text "" ] ) (topLink <$> student.section) 
---                          <+> [ Normal [ Text "\\newpage" ]                       
---                              , Normal [ Text "" ]
---                              , Normal [ Text "-----" ]
---                              ]
---             , id = Just student.id
---             }
-
---   where
---       topLink : String -> MDPar
---       topLink sect = Normal [ Link $ MkHRef "#top-\{remSpaces sect}" "return to \{sect} summary" ]
+      topLink : String -> MDPar
+      topLink sect = Normal [ Link $ MkHRef "#top-\{remSpaces sect}" "return to \{sect} summary" ]
     
---       info : List MDPar
---       info = [ ListItem { header = [ Text $ "id: \{student.id}"], contents = []}
---              , ListItem { header = [ Text $ "level: " ++ student.level], contents = []}
---              , ListItem { header = [ Text $ "majors: " ++ joinBy ", " student.majors], contents = []}
---              , ListItem { header = [ Text $ "school: " ++ student.school], contents = []}           
---              ]
-
---       cscore : Course -> ScoreComponent -> Maybe Double
---       cscore course comp = componentScore course student.outcomes comp
+      info : List MDPar
+      info = [ ListItem { header = [ Text $ "id: \{student.id}"], contents = []}
+             , ListItem { header = [ Text $ "level: " ++ student.level], contents = []}
+             , ListItem { header = [ Text $ "majors: " ++ joinBy ", " student.majors], contents = []}
+             , ListItem { header = [ Text $ "school: " ++ student.school], contents = []}           
+             ]
     
---       markupFormula : Course -> Formula -> MDPar
---       markupFormula course f = 
---         let formulaBody : List (Vect 4 MDText)
---             formulaBody = (\comp => [ Text $ comp.compName
---                                     , Text $ show $ comp.weight
---                                     , Text $ maybe "--" (show . round 2) $ cscore course comp 
---                                     , Text $ maybe "--" (show . round 2 . (* comp.weight)) $ cscore course comp
---                                     ]) 
---                                     <$> f.formula 
+      markupFormula : Course -> Formula -> MDPar
+      markupFormula course f = 
+        let formulaBody : List (Vect 4 MDText)
+            formulaBody = (\comp => let score = formulaComponentScore course student.outcomes comp in
+                                      [ Text $ comp.compName
+                                      , Text $ show $ comp.weight
+                                      , Text $ maybe "--" (show . round 2) $ score
+                                      , Text $ maybe "--" (show . round 2 . (* comp.weight)) $ score
+                                      ]) 
+                                    <$> f.formulaComponents 
                                     
---             formulaSummary : Vect 4 MDText
---             formulaSummary = [ Text "", Text "", Text ""
---                              , Text $ maybe "--" (show . round 2) $ scoreForFormula course student.outcomes f
---                              ]
---         in
---         Section { header = [ Text f.id ]
---                 , contents = [ Table { header = Bold <$> [ "component", "weight", "score", "" ] 
---                                                          , contents = formulaBody <+> [ formulaSummary ]
---                                      }
---                              ]
---                 , id = Nothing
---                 }
+            formulaSummary : Vect 4 MDText
+            formulaSummary = [ Text "", Text "", Text ""
+                             , Text $ maybe "--" (show . round 2) $ scoreForFormula course student.outcomes f
+                             ]
+        in
+        Section { header = [ Text f.id ]
+                , contents = [ Table { header = Bold <$> [ "component", "weight", "score", "" ] 
+                                                         , contents = formulaBody <+> [ formulaSummary ]
+                                     }
+                             ]
+                , id = Nothing
+                }
 
---       contents : Course -> List (Vect 3 MDText)
---       contents course = (\out => Text <$> 
---         [ out.label 
---         , maybe "--" (show . round 2)  (getOutcomeByLabel course student.outcomes out.label)
---         , maybe "--" (displayRawScore . .value) (getRawOutcomeByLabel student.outcomes out.label)
---         ])
---         <$> 
---         student.outcomes
+      contents : Course -> List (Vect 3 MDText)
+      contents course = (\out => Text <$> 
+        [ out.scoreName 
+        , (show . round 2)  (outcomeScore course out)
+        , show $ out.marks
+        ])
+        <$> 
+        student.outcomes
       
---       outcomes : Course -> MDPar
---       outcomes course = Table { header = Bold <$> [ "Item", "Score", "raw scores" ] 
---                               , contents = contents course
---                               }
+      outcomes : Course -> MDPar
+      outcomes course = Table { header = Bold <$> [ "Item", "Score", "raw scores" ] 
+                              , contents = contents course
+                              }
 
---       grades : List MDPar
---       grades = [ ListItem [ Bold "Score: " , Text $ (show . round 2 ) student.courseScore ] []
---                , ListItem [ Bold "Grade: " , Text student.grade ] []
---                ]
+      grades : List MDPar
+      grades = [ ListItem [ Bold "Score: " , Text $ (show . round 2 ) student.courseScore ] []
+               , ListItem [ Bold "Grade: " , Text student.grade ] []
+               ]
   
            
+----------------------------------------------------------------------------------------------------
 
 -- statsReport : Reader ResultState MDPar
 -- statsReport = do

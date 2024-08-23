@@ -149,7 +149,7 @@ record StudentData where
   majors  : List String
   outcomes : List Outcome
   courseScore : Maybe Double
-  grade       : Maybe String
+  grade       : Maybe Grade
 
 %runElab derive "StudentData" [Show, Eq, myToJSON, myFromJSON]
 
