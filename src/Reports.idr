@@ -91,87 +91,87 @@ studentReport student = do
                               }
 
       grades : List MDPar
-      grades = [ ListItem [ Bold "Score: " , Text $ (show . round 2 ) student.courseScore ] []
-               , ListItem [ Bold "Grade: " , Text student.grade ] []
+      grades = [ ListItem [ Bold "Score: " , Text $ maybe "--" (show . round 2 ) student.courseScore ] []
+               , ListItem [ Bold "Grade: " , Text $ maybe "--" show student.grade ] []
                ]
   
            
 ----------------------------------------------------------------------------------------------------
 
--- statsReport : Reader ResultState MDPar
--- statsReport = do
---   state <- ask
---   let course = state.course
---       students = state.studentResults
+statsReport : Reader State MDPar
+statsReport = do
+  state <- ask
+  let course = state.course
+      students = studentData
   
---   pure $   
---     Section { header = [ Text "Statistics" ] 
---             , contents = [ ListItem { header = [ Text "Levels"], contents =[ levelTable students ] }
---                          , ListItem { header = [ Text "School"], contents = [ schoolTable students ] }
---                          , ListItem { header = [ Text "Majors"], contents = [ majorsTable students ] }
---                          , ListItem { header = [ Text "Score statistics" ]
---                                     , contents = [ classMedian students
---                                                  , classMean students
---                                                  ]
---                                     }
---                          , ListItem { header = [ Text "Grades"], contents = [ gradeTable students ] }
---                          , Normal [ Text "\\newpage" ]                                      
---                          , Normal [ Text "" ]                                
---                          , Normal [ Text "------" ]  
---                          ]
---             , id = Just "statistics"
---             }           
---   where
---     classMedian : List StudentData -> MDPar
---     classMedian students
---       = ListItem { header = [ Text $ "median: " ++ show m ]
---                  , contents = []
---                  }
---       where
---         m : Double
---         m = (round 2) (median $ .courseScore <$> students)
+  pure $   
+    Section { header = [ Text "Statistics" ] 
+            , contents = [ ListItem { header = [ Text "Levels"], contents =[ levelTable students ] }
+                         , ListItem { header = [ Text "School"], contents = [ schoolTable students ] }
+                         , ListItem { header = [ Text "Majors"], contents = [ majorsTable students ] }
+                         , ListItem { header = [ Text "Score statistics" ]
+                                    , contents = [ classMedian students
+                                                 , classMean students
+                                                 ]
+                                    }
+                         , ListItem { header = [ Text "Grades"], contents = [ gradeTable students ] }
+                         , Normal [ Text "\\newpage" ]                                      
+                         , Normal [ Text "" ]                                
+                         , Normal [ Text "------" ]  
+                         ]
+            , id = Just "statistics"
+            }           
+  where
+    classMedian : List StudentData -> MDPar
+    classMedian students
+      = ListItem { header = [ Text $ "median: " ++ show m ]
+                 , contents = []
+                 }
+      where
+        m : Double
+        m = (round 2) (median $ .courseScore <$> students)
 
---     classMean : List StudentData -> MDPar
---     classMean students = 
---       ListItem { header = [ Text $ "mean: " ++ show  m ]
---                , contents = []
---                }
---       where
---         m : Double
---         m = round 2 $ mean $ .courseScore <$> students  
+    classMean : List StudentData -> MDPar
+    classMean students = 
+      ListItem { header = [ Text $ "mean: " ++ show  m ]
+               , contents = []
+               }
+      where
+        m : Double
+        m = round 2 $ mean $ .courseScore <$> students  
       
---     levelTable : List StudentData -> MDPar
---     levelTable students = 
---       Table { header = [ Text "Level", Text "#" ]
---             , contents = (\class => Text <$> [ class, show $ (countPred (studentClass class) students)])
---                           <$> [ "First Year", "Sophomore", "Junior", "Senior" ]
---             }
+    levelTable : List StudentData -> MDPar
+    levelTable students = 
+      Table { header = [ Text "Level", Text "#" ]
+            , contents = (\class => Text <$> [ class, show $ (countPred (studentClass class) students)])
+                          <$> [ "First Year", "Sophomore", "Junior", "Senior" ]
+            }
 
 
---     schoolTable : List StudentData -> MDPar
---     schoolTable students = 
---       Table { header = [ Text "School", Text "#" ]
---             , contents = [ [ Text "A&S", Text $ show $ countPred artsSciences students ]
---                          , [ Text "SoE", Text $ show $ countPred engineer students ]
---                          ]                                     
---                        }
+    schoolTable : List StudentData -> MDPar
+    schoolTable students = 
+      Table { header = [ Text "School", Text "#" ]
+            , contents = [ [ Text "A&S", Text $ show $ countPred artsSciences students ]
+                         , [ Text "SoE", Text $ show $ countPred engineer students ]
+                         ]                                     
+                       }
 
---     majorsTable : List StudentData -> MDPar
---     majorsTable students = 
---       Table { header = [ Text "Schools & Majors", Text "#" ]
---             , contents = (\major => [ Text major, Text $ show $ countPred (matchMajor major) students ])<$>
---                          getMajors students
---                        }
-
-
+    majorsTable : List StudentData -> MDPar
+    majorsTable students = 
+      Table { header = [ Text "Schools & Majors", Text "#" ]
+            , contents = (\major => [ Text major, Text $ show $ countPred (matchMajor major) students ])<$>
+                         getMajors students
+                       }
 
 
---     gradeTable : List StudentData -> MDPar
---     gradeTable students = 
---       Table { header = [ Text "Grade", Text "#" ]
---             , contents = (\grade => Text <$> [ grade, show $ (countPred (gradeMatch grade) students)])
---                          <$> [ "A", "B", "C", "D", "F" ]
---             }
+
+
+    gradeTable : List StudentData -> MDPar
+    gradeTable students = 
+      Table { header = [ Text "Grade", Text "#" ]
+            , contents = (\grade => Text <$> [ grade, show $ (countPred (gradeMatch grade) students)])
+                         <$> [ "A", "B", "C", "D", "F" ]
+            }
 
 
 -- public export 
