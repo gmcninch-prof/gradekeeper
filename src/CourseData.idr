@@ -113,7 +113,6 @@ record Course where
   scores   : List Score
   formulas   : List Formula
   exceptFormulas : List Formula
-  sections : List Section
   grades : Maybe (List Grade)
   exceptions: List StudentException
   
