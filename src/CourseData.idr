@@ -121,7 +121,7 @@ record Course where
 export
 reportFileName : Course -> String
 reportFileName course = 
-  course.title ++ "-" ++ show course.semester ++ ".md"
+  course.title ++ "-" ++ show course.semester ++ "--grade-report.md"
 
 
 export

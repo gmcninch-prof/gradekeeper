@@ -2,7 +2,7 @@
 exec guile -e main -s "$0" "$@"
 !#
 ;;--------------------------------------------------------------------------------
-;; Time-stamp: <2024-08-24 Sat 08:51 EDT - george@valhalla>
+;; Time-stamp: <2024-08-24 Sat 11:44 EDT - george@valhalla>
 ;;
 
 (use-modules (json)
@@ -100,7 +100,7 @@ exec guile -e main -s "$0" "$@"
 
 (define (get-score maxes record heading)
   (let
-      ((max (or (string->number (assoc-ref maxes heading))  1))
+      ((max (or (string->number (assoc-ref maxes heading))  100))
        (raw (or (string->number (assoc-ref record heading)) 0)))
 ;;    (format #t "raw ~a max ~a" raw max)
     (* 100 (/ raw max))

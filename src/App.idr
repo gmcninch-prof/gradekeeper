@@ -18,12 +18,6 @@ import Util
 
 import Data.List
 
--- computeResults : List StudentData -> Reader State (List StudentResult)
--- computeResults sd = do
---   state <- ask
---   let results : List StudentResult = mapMaybe (result state.course state.exceptions) sd
---   pure results
-
 courseReport : Reader State MD
 courseReport = do
   state <- ask
