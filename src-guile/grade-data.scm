@@ -2,7 +2,7 @@
 exec guile -e main -s "$0" "$@"
 !#
 ;;--------------------------------------------------------------------------------
-;; Time-stamp: <2024-08-22 Thu 12:20 EDT - george@valhalla>
+;; Time-stamp: <2024-08-24 Sat 08:51 EDT - george@valhalla>
 ;;
 
 (use-modules (json)
@@ -117,12 +117,12 @@ exec guile -e main -s "$0" "$@"
        (outcomes  (list->vector
 		   (map (lambda (score-spec)
 			  (let*
-			      ((score-name (assoc-ref score-spec "scorename"))
+			      ((score-name (assoc-ref score-spec "scoreName"))
 			       (items (assoc-ref score-spec "items"))
 			       (marks (map
 				       (lambda (heading) (get-score maxes crec heading))
 				       (vector->list (assoc-ref score-spec "items")))))
-			    `(("scorename" . ,score-name)
+			    `(("scoreName" . ,score-name)
 			      ("marks"    . ,(list->vector marks)))))
 			(vector->list score-specs)))))
     ;;    (format (current-error-port) "Name: ~a\n" (assoc-ref rec "Name"))
@@ -153,7 +153,7 @@ exec guile -e main -s "$0" "$@"
        (output         (option-ref options 'output #f)))
     (if course-spec
 	(let*
-	    ((scores-specs   (assoc-ref course-spec "scorespecs"))
+	    ((scores-specs   (assoc-ref course-spec "scores"))
 	     (canvas-alist   (csv-file->alist canvas-csv #:start 2))
 	     (maxes          (car canvas-alist))
 	     (canvas-map     (mk-map

@@ -61,7 +61,7 @@ studentReport student = do
                                       , Text $ maybe "--" (show . round 2) $ score
                                       , Text $ maybe "--" (show . round 2 . (* comp.weight)) $ score
                                       ]) 
-                                    <$> f.formulaComponents 
+                                    <$> f.formulaComps 
                                     
             formulaSummary : Vect 4 MDText
             formulaSummary = [ Text "", Text "", Text ""
@@ -80,7 +80,7 @@ studentReport student = do
       contents course = (\out => Text <$> 
         [ out.scoreName 
         , (show . round 2)  (outcomeScore course out)
-        , show $ out.marks
+        , show $ (round 2) <$> out.marks
         ])
         <$> 
         student.outcomes
@@ -102,7 +102,7 @@ statsReport : Reader State MDPar
 statsReport = do
   state <- ask
   let course = state.course
-      students = studentData
+      students = state.studentdata
   
   pure $   
     Section { header = [ Text "Statistics" ] 
@@ -114,7 +114,7 @@ statsReport = do
                                                  , classMean students
                                                  ]
                                     }
-                         , ListItem { header = [ Text "Grades"], contents = [ gradeTable students ] }
+                         , ListItem { header = [ Text "Grades"], contents = [ gradeTable (courseLetterGrades course)students ] }
                          , Normal [ Text "\\newpage" ]                                      
                          , Normal [ Text "" ]                                
                          , Normal [ Text "------" ]  
@@ -124,21 +124,21 @@ statsReport = do
   where
     classMedian : List StudentData -> MDPar
     classMedian students
-      = ListItem { header = [ Text $ "median: " ++ show m ]
+      = ListItem { header = [ Text $ "median: " ++ maybe "--" show m ]
                  , contents = []
                  }
       where
-        m : Double
-        m = (round 2) (median $ .courseScore <$> students)
+        m : Maybe Double
+        m = (round 2 . median) <$> traverse (.courseScore) students
 
     classMean : List StudentData -> MDPar
     classMean students = 
-      ListItem { header = [ Text $ "mean: " ++ show  m ]
+      ListItem { header = [ Text $ "mean: " ++ maybe "--" show  m ]
                , contents = []
                }
       where
-        m : Double
-        m = round 2 $ mean $ .courseScore <$> students  
+        m : Maybe Double
+        m = (round 2 . mean) <$> traverse (.courseScore) students  
       
     levelTable : List StudentData -> MDPar
     levelTable students = 
@@ -159,72 +159,71 @@ statsReport = do
     majorsTable : List StudentData -> MDPar
     majorsTable students = 
       Table { header = [ Text "Schools & Majors", Text "#" ]
-            , contents = (\major => [ Text major, Text $ show $ countPred (matchMajor major) students ])<$>
-                         getMajors students
+            , contents = (\major => [ Text major, Text $ show $ countPred (matchMajor major) students ])
+                         <$> getMajors students
                        }
 
 
-
-
-    gradeTable : List StudentData -> MDPar
-    gradeTable students = 
+    gradeTable : List Grade -> List StudentData -> MDPar
+    gradeTable letterGrades students = 
       Table { header = [ Text "Grade", Text "#" ]
-            , contents = (\grade => Text <$> [ grade, show $ (countPred (gradeMatch grade) students)])
-                         <$> [ "A", "B", "C", "D", "F" ]
+            , contents = (\grade => [ Text $ show grade , Text $ show $ countPred (gradeMatch grade) students])
+                         <$> letterGrades
             }
 
+----------------------------------------------------------------------------------------------------
 
--- public export 
--- mkCourseReport : Reader ResultState MD
--- mkCourseReport = do
---   state <- ask
---   let course = state.course
---       students = state.studentResults
+public export 
+mkCourseReport : Reader State MD
+mkCourseReport = do
+  state <- ask
+  let course = state.course
+      students = state.studentdata
   
---   stats <- statsReport 
+  stats <- statsReport 
   
---   studentSections <- traverse studentReport students
+  studentSections <- traverse studentReport students
   
---   pure $ MkMD { date = Just $ state.date
---               , title = Just $ course.title ++ " " ++ show course.semester
---               , author = Nothing
---               , content = [ stats ] <+> (mdSection course students <$> sections students)  <+> studentSections
---               , fileName = reportFileName course
---               }
---   where
---     headers : Vect 4 MDText
---     headers = Bold <$> [  "Id", "Name", "Score", "Grade" ]
+  pure $ MkMD { date = Just $ state.date
+              , title = Just $ course.title ++ " " ++ show course.semester
+              , author = Nothing
+              , content =  (mdSection course students <$> sections students) <+> [ stats ] <+> studentSections
+              , fileName = reportFileName course
+              }
+  where
+    headers : Vect 4 MDText
+    headers = Bold <$> [  "Id", "Name", "Score", "Grade" ]
   
---     sections : List StudentData -> List String
---     sections students = Data.List.sort $ Data.List.nub $ concat $ (.section <$> students)
+    sections : List StudentData -> List String
+    sections students = Data.List.sort $ Data.List.nub $ concat $ (.section <$> students)
   
---     bySection : String -> List StudentData -> List StudentData
---     bySection sec students = filter (\student => sec `elem` student.section) students
+    bySection : String -> List StudentData -> List StudentData
+    bySection sec students = filter (\student => sec `elem` student.section) students
   
---     initItems : (student : StudentData) -> Vect 4 MDText
---     initItems student = 
---       [ Text student.id
---       , Link $ MkHRef {target = "#" ++ student.id, desc = student.name }
---       , Text $ (show . round 2) student.courseScore
---       , Text student.grade
---       ]
+    initItems : (student : StudentData) -> Vect 4 MDText
+    initItems student = 
+      [ Text student.id
+      , Link $ MkHRef {target = "#" ++ student.id, desc = student.name }
+      , Text $ maybe "--" (show . round 2) student.courseScore
+      , Text $ maybe "--" show student.grade
+      ]
   
---     contents : List StudentData -> String -> List (Vect 4 MDText)
---     contents students sect = initItems <$> (bySection sect students)
+    contents : List StudentData -> String -> List (Vect 4 MDText)
+    contents students sect = initItems <$> (bySection sect students)
   
---     table : List StudentData -> String -> MDPar
---     table students sect = Table { header = headers
---                                 , contents = contents students sect
---                                 } 
+    table : List StudentData -> String -> MDPar
+    table students sect = Table { header = headers
+                                , contents = contents students sect
+                                } 
 
---     mdSection : Course -> List StudentData -> String -> MDPar
---     mdSection course students sect =  
---       Section { header = [Text course.title, Text sect,  Text (show course.semester)]
---               , contents = [ table students sect
---                            , Normal [ Text "\\newpage" ]                              
---                            , Normal [ Text "" ]
---                            , Normal [ Text "-----" ]
---                            ]
---               , id = Just $ "top-\{remSpaces sect}"
---               }
+    mdSection : Course -> List StudentData -> String -> MDPar
+    mdSection course students sect =  
+      Section { header = [Text course.title, Text sect,  Text (show course.semester)]
+              , contents = [ table students sect
+                           , Normal [ Text "\\newpage" ]                              
+                           , Normal [ Text "" ]
+                           , Normal [ Text "-----" ]
+                           ]
+              , id = Just $ "top-\{remSpaces sect}"
+              }
 

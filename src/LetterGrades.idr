@@ -9,7 +9,7 @@ import Util
 
 singleOptions : Options
 singleOptions = { sum := ObjectWithSingleField
-                , constructorTagModifier := toLower 
+--                , constructorTagModifier := toLower 
                 , replaceMissingKeysWithNull := True } defaultOptions
 
 

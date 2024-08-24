@@ -100,7 +100,7 @@ dotProduct xs ys = sum $ zipWith (*) xs ys
 export
 scoreForFormula : (course : Course) -> (outcomes : List Outcome) -> Formula -> Maybe Double
 scoreForFormula course outcomes formula =  do
-  let comps = formula.formulaComponents
+  let comps = formula.formulaComps
       
       fcs : Vect (length comps) FormulaComponent
       fcs = Data.Vect.fromList comps
@@ -161,9 +161,7 @@ result student = do
                    Nothing => 0
                    Just sc => sc
                    
-      lg = case course.grades of
-                Nothing => defaultLetterGrades
-                (Just x) => x
+      lg = courseLetterGrades course
 
       grade : Grade
       grade  = if incomplete then Incomplete else computeGrade lg score

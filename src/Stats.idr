@@ -13,6 +13,7 @@ import Control.Ord
 import LetterGrades
 import Util
 
+export
 gradeMatch : (grade : Grade) -> (student : StudentData) -> Bool
 gradeMatch grade student = 
   Just grade == student.grade

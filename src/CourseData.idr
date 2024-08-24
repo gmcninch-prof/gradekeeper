@@ -10,7 +10,7 @@ import LetterGrades
 
 singleOptions : Options
 singleOptions = { sum := ObjectWithSingleField
-                , constructorTagModifier := toLower 
+--                , constructorTagModifier := toLower 
                 , replaceMissingKeysWithNull := True } defaultOptions
 
 
@@ -80,7 +80,7 @@ public export
 record Formula where
   constructor MkFormula
   id : String
-  formulaComponents :  List FormulaComponent
+  formulaComps :  List FormulaComponent
 
 %runElab derive "Formula" [ Show, Eq, myToJSON, myFromJSON ]
 
@@ -123,6 +123,14 @@ export
 reportFileName : Course -> String
 reportFileName course = 
   course.title ++ "-" ++ show course.semester ++ ".md"
+
+
+export
+courseLetterGrades : Course -> List Grade
+courseLetterGrades course = case course.grades of
+                              Nothing => defaultLetterGrades
+                              (Just gt) => gt
+
 
 --------------------------------------------------------------------------------
 -- student
