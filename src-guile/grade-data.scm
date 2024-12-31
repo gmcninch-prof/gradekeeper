@@ -2,7 +2,7 @@
 exec guile -e main -s "$0" "$@"
 !#
 ;;--------------------------------------------------------------------------------
-;; Time-stamp: <2024-08-24 Sat 11:44 EDT - george@valhalla>
+;; Time-stamp: <2024-12-30 Mon 20:32 EST - george@valhalla>
 ;;
 
 (use-modules (json)
@@ -146,7 +146,6 @@ exec guile -e main -s "$0" "$@"
 			 (enroll     (single-char #\e) (value #t))
 			 (output     (single-char #\o) (value #t))))
        (options        (getopt-long argv option-spec))
-       (course         (option-ref options 'course  #f))
        (enroll-csv     (option-ref options 'enroll  #f))
        (canvas-csv     (option-ref options 'canvas  #f))
        (course-spec    (if course (get-course-spec course) #f))
