@@ -2,7 +2,7 @@
 exec guile -e main -s "$0" "$@"
 !#
 ;;--------------------------------------------------------------------------------
-;; Time-stamp: <2024-12-30 Mon 20:32 EST - george@valhalla>
+;; Time-stamp: <2025-02-15 Sat 09:46 EST - george@valhalla>
 ;;
 
 (use-modules (json)
@@ -112,7 +112,9 @@ exec guile -e main -s "$0" "$@"
        (sections (list->vector (split-and (assoc-ref crec "Section"))))
        (majors   (list->vector (map string-trim-both
 				    (string-split
-				     (or (assoc-ref rec "Plan(s)") (assoc-ref rec "Program and Plan"))
+				     (or (assoc-ref rec "Plan(s)")
+					 (assoc-ref rec "Program and Plan")
+					 (assoc-ref rec "Program Descr"))
 				     #\,))))
        (outcomes  (list->vector
 		   (map (lambda (score-spec)
@@ -148,30 +150,21 @@ exec guile -e main -s "$0" "$@"
        (options        (getopt-long argv option-spec))
        (enroll-csv     (option-ref options 'enroll  #f))
        (canvas-csv     (option-ref options 'canvas  #f))
+       (course         (option-ref options 'course #f))
        (course-spec    (if course (get-course-spec course) #f))
        (output         (option-ref options 'output #f)))
     (if course-spec
 	(let*
 	    ((scores-specs   (assoc-ref course-spec "scores"))
-	     (canvas-alist   (csv-file->alist canvas-csv #:start 2))
+	     (canvas-alist   (csv-file->alist canvas-csv #:start 2 #:head 0))
 	     (maxes          (car canvas-alist))
 	     (canvas-map     (mk-map
 			      (cdr canvas-alist)
 			      "Integration ID"))
 	     (enroll-data    (csv-file->alist enroll-csv))
 	     )
-	  ;; (for-each
-	  ;;  (lambda (rec)
-	  ;;    (format (current-error-port) "~s\n\n" rec))
-	  ;;  (vector->list enroll-data))
+	  (format #t "~a\n\n" canvas-map)
 	  (if output
-	      ;; (for-each
-	      ;;  (lambda (rec)
-	      ;; 	 (format #t "result for rec ~s\n" rec)
-	      ;; 	 (pretty-print(build-student-record maxes canvas-map scores-specs rec)))
-	         
-	      ;;  enroll-data)
-		  
 	      (with-output-to-file output
 		(lambda ()
 		  (scm->json
@@ -183,7 +176,7 @@ exec guile -e main -s "$0" "$@"
 		   #:pretty #t)))
 	      (format #t "No output file specified")
 	      
-	  )))))
+	      )))))
 
 ;; Local Variables:
 ;; mode: scheme
