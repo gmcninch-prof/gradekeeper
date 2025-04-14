@@ -2,7 +2,7 @@
 exec guile -e main -s "$0" "$@"
 !#
 ;;--------------------------------------------------------------------------------
-;; Time-stamp: <2025-02-15 Sat 09:46 EST - george@valhalla>
+;; Time-stamp: <2025-02-25 Tue 16:45 EST - george@calliope>
 ;;
 
 (use-modules (json)
@@ -98,13 +98,22 @@ exec guile -e main -s "$0" "$@"
       ((id (assoc-ref rec "ID")))
     (assoc-ref canvas-map id)))
 
-(define (get-score maxes record heading)
-  (let
-      ((max (or (string->number (assoc-ref maxes heading))  100))
-       (raw (or (string->number (assoc-ref record heading)) 0)))
-;;    (format #t "raw ~a max ~a" raw max)
-    (* 100 (/ raw max))
-    ))
+
+(define (get-number ns)
+  (cond
+   ((string? ns) (or (string->number ns) 0))
+   (else 0)
+   ))
+
+
+(define (get-score maxes record)
+  (lambda (heading)
+    (let
+	((max (or (string->number (assoc-ref maxes heading))  100))
+	 (raw (get-number (assoc-ref record heading))))
+      ;; (format #t "raw ~a max ~a\n" raw max)
+      (* 100 (/ raw max))
+      )))
 
 (define (build-student-record maxes canvas-map score-specs rec)
   (let*
@@ -122,7 +131,7 @@ exec guile -e main -s "$0" "$@"
 			      ((score-name (assoc-ref score-spec "scoreName"))
 			       (items (assoc-ref score-spec "items"))
 			       (marks (map
-				       (lambda (heading) (get-score maxes crec heading))
+				       (get-score maxes crec)
 				       (vector->list (assoc-ref score-spec "items")))))
 			    `(("scoreName" . ,score-name)
 			      ("marks"    . ,(list->vector marks)))))
