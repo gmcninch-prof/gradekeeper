@@ -1,10 +1,10 @@
-[custom.all.gradekeeper-idris]
+[custom.all.gradekeeper]
 type = "local"
 path = "."
-ipkg = "gradekeeper-idris.ipkg"
+ipkg = "gradekeeper.ipkg"
 test = "test/test.ipkg"
 
-[custom.all.gradekeeper-idris-test]
+[custom.all.gradekeeper-test]
 type = "local"
 path = "test"
 ipkg = "test.ipkg"
@@ -19,9 +19,5 @@ type = "local"
 path = "/home/george/Tools/IdrisTime"
 ipkg = "IdrisTime.ipkg"
 
-[custom.all.csv-idris]
-type = "local"
-path = "/home/george/Tools/csv-idris"
-ipkg = "csv-idris.ipkg"
 
 

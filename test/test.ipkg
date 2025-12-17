@@ -1,4 +1,4 @@
-package gradekeeper-idris-test
+package gradekeeper-test
 version = 0.1.0
 authors = "George McNinch"
 -- maintainers =
@@ -13,7 +13,7 @@ authors = "George McNinch"
 -- langversion
 
 -- packages to add to search path
-depends = gradekeeper-idris
+depends = gradekeeper
 
 -- modules to install
 -- modules =
@@ -22,7 +22,7 @@ depends = gradekeeper-idris
 main = Main
 
 -- name of executable
-executable = "gradekeeper-idris-test"
+executable = "gradekeeper-test"
 -- opts =
 sourcedir = "src"
 -- builddir =
