@@ -4,11 +4,13 @@ INSTALLDIR = $(HOME)/.local/bin
 
 all: idris
 
-install: $INSTALLDIR/grade-data.scm $INSTALLDIR/gradekeeper
-
+install: $INSTALLDIR/grade-data.scm $INSTALLDIR/gradekeeper $INSTALLDIR/course-spec-to-json.scm
 
 $INSTALLDIR/grade-data.scm: src-guile/grade-data.scm
 	cp src-guile/grade-data.scm $(INSTALLDIR)
+
+$INSTALLDIR/course-spec-to-json.scm: src-guile/course-spec-to-json.scm
+	cp src-guile/course-spec-to-json.scm $(INSTALLDIR)
 
 $INSTALLDIR/gradekeeper: assets/gradekeeper
 	cp assets/gradekeeper $(INSTALLDIR)
