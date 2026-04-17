@@ -2,7 +2,7 @@
 exec guile -e main -s "$0" "$@"
 !#
 ;;--------------------------------------------------------------------------------
-;; Time-stamp: <2025-02-25 Tue 16:45 EST - george@calliope>
+;; Time-stamp: <2026-04-17 Fri 12:59 EDT - george@sortilege>
 ;;
 
 (use-modules (json)
@@ -136,8 +136,7 @@ exec guile -e main -s "$0" "$@"
 			    `(("scoreName" . ,score-name)
 			      ("marks"    . ,(list->vector marks)))))
 			(vector->list score-specs)))))
-    ;;    (format (current-error-port) "Name: ~a\n" (assoc-ref rec "Name"))
-    `(("name"     . ,(assoc-ref rec "Name"))
+    `(("name" . ,(or (assoc-ref crec "Student") (assoc-ref rec "Name")))
       ("id"       . ,(assoc-ref rec "ID"))
       ("email"    . ,(or (assoc-ref rec "Email")""))
       ("level"    . ,(or (assoc-ref rec "Acad Level") (assoc-ref rec "Level") ""))
@@ -170,7 +169,10 @@ exec guile -e main -s "$0" "$@"
 	     (canvas-map     (mk-map
 			      (cdr canvas-alist)
 			      "Integration ID"))
-	     (enroll-data    (csv-file->alist enroll-csv))
+	     (enroll-data (filter
+              (lambda (rec)
+                (not (equal? (assoc-ref rec "Status Note") "Withdrawn")))
+              (csv-file->alist enroll-csv)))
 	     )
 	  (format #t "~a\n\n" canvas-map)
 	  (if output
