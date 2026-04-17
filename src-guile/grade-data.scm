@@ -2,7 +2,7 @@
 exec guile -e main -s "$0" "$@"
 !#
 ;;--------------------------------------------------------------------------------
-;; Time-stamp: <2026-04-17 Fri 12:59 EDT - george@sortilege>
+;; Time-stamp: <2026-04-17 Fri 13:29 EDT - george@sortilege>
 ;;
 
 (use-modules (json)
@@ -123,7 +123,8 @@ exec guile -e main -s "$0" "$@"
 				    (string-split
 				     (or (assoc-ref rec "Plan(s)")
 					 (assoc-ref rec "Program and Plan")
-					 (assoc-ref rec "Program Descr"))
+					 (assoc-ref rec "Program Descr")
+					 "")
 				     #\,))))
        (outcomes  (list->vector
 		   (map (lambda (score-spec)
@@ -169,10 +170,20 @@ exec guile -e main -s "$0" "$@"
 	     (canvas-map     (mk-map
 			      (cdr canvas-alist)
 			      "Integration ID"))
+	     
+	     ;; (enroll-data (filter
+	     ;; 		   (lambda (rec)
+	     ;; 		     (not (equal? (assoc-ref rec "Status Note") "Withdrawn")))
+	     ;; 		   (csv-file->alist enroll-csv)))
+
 	     (enroll-data (filter
-              (lambda (rec)
-                (not (equal? (assoc-ref rec "Status Note") "Withdrawn")))
-              (csv-file->alist enroll-csv)))
+			   (lambda (rec)
+			     (not (or (equal? (assoc-ref rec "Status Note") "Withdrawn")
+				      (equal? (assoc-ref rec "Status") "Withdrawn"))))			   
+			   (let* ((raw (csv-file->scm enroll-csv))
+				  (head (if (string-contains (caar raw) "Class Roster") 1 0))
+				  (start (+ head 1)))
+			     (extract-headers-mk-vect-alist raw #:head head #:start start))))	     
 	     )
 	  (format #t "~a\n\n" canvas-map)
 	  (if output
