@@ -2,7 +2,7 @@
 exec guile -e main -s "$0" "$@"
 !#
 ;;--------------------------------------------------------------------------------
-;; Time-stamp: <2026-04-17 Fri 13:29 EDT - george@sortilege>
+;; Time-stamp: <2026-04-19 Sun 10:13 EDT - george@valhalla>
 ;;
 
 (use-modules (json)
@@ -185,7 +185,7 @@ exec guile -e main -s "$0" "$@"
 				  (start (+ head 1)))
 			     (extract-headers-mk-vect-alist raw #:head head #:start start))))	     
 	     )
-	  (format #t "~a\n\n" canvas-map)
+	  ;;(format #t "~a\n\n" canvas-map)
 	  (if output
 	      (with-output-to-file output
 		(lambda ()

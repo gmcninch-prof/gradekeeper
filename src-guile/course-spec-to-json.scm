@@ -277,6 +277,31 @@
 
     (json-object fields)))
 
+;;;--------------------------------------------------------------------------------
+;;; emit course.mk
+
+(define (course-mk spec)
+  (let*
+      ((semester-sexp (assq 'semester (cdr spec)))
+       (ay (field-ref1 semester-sexp 'ay))
+       (sem (field-ref1 semester-sexp 'semester))
+       (title (field-ref1 spec 'title))
+       (instructors (field-ref spec 'instructors)))
+(with-output-to-file "course.mk"
+  (lambda ()
+    (display
+     (string-append
+      (string-join
+       `(,(string-append "COURSE      := " title)
+	 ;; AY formatted as "YYYY-YYYY+1" to match gradekeeper markdown output naming
+	 ,(format #f "AY          := ~a-~a" ay (+ 1 ay))	 
+	 ,(string-append "TERM        := " (symbol->string sem))
+	 ,(string-append "INSTRUCTORS := " (string-join instructors ", ")))
+       "\n")
+      "\n"))))))
+
+;;;--------------------------------------------------------------------------------
+
 ;;; ---------------------------------------------------------------------------
 ;;; Main
 ;;; ---------------------------------------------------------------------------
@@ -286,10 +311,12 @@
              (input-file #f)
              (output-file #f))
     (match rest
-      (()
-       (unless input-file (error "Usage: course-spec-to-json.scm <spec.scm> [--output <out.json>]"))
+      (()                                        ; ← base case: no more args
+       (unless input-file
+         (error "Usage: course-spec-to-json.scm <spec.scm> [--output <out.json>]"))
        (let* ((spec (call-with-input-file input-file read))
               (json (course->json spec)))
+         (course-mk spec)
          (if output-file
              (call-with-output-file output-file
                (lambda (port) (display json port) (newline port)))
