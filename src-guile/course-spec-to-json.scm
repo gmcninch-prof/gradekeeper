@@ -286,7 +286,8 @@
        (ay (field-ref1 semester-sexp 'ay))
        (sem (field-ref1 semester-sexp 'semester))
        (title (field-ref1 spec 'title))
-       (instructors (field-ref spec 'instructors)))
+       (instructors (field-ref spec 'instructors))
+       (assets-dir (field-ref1 spec 'assets-dir)))
 (with-output-to-file "course.mk"
   (lambda ()
     (display
@@ -295,10 +296,12 @@
        `(,(string-append "COURSE      := " title)
 	 ;; AY formatted as "YYYY-YYYY+1" to match gradekeeper markdown output naming
 	 ,(format #f "AY          := ~a-~a" ay (+ 1 ay))	 
-	 ,(string-append "TERM        := " (symbol->string sem))
+	 ,(string-append "SEMESTER    := " (symbol->string sem))
 	 ,(string-append "INSTRUCTORS := " (string-join instructors ", ")))
        "\n")
-      "\n"))))))
+      "\n"))
+    (when assets-dir
+      (display (string-append "ASSETS_DIR   := " assets-dir "\n")))))))
 
 ;;;--------------------------------------------------------------------------------
 

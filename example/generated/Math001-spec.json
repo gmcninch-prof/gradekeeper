@@ -1,0 +1,224 @@
+{
+  "title": "Math001",
+  "instructors": [
+  "Joe Smith"
+],
+  "semester": {
+  "ay": 2023,
+  "semester": "Fall"
+},
+  "scores": [
+  {
+  "scoreName": "final exam",
+  "items": [
+  "Final exam (111)"
+]
+},
+  {
+  "scoreName": "midterm1",
+  "items": [
+  "Midterm 1 (222)"
+]
+},
+  {
+  "scoreName": "midterm2",
+  "items": [
+  "Midterm 2 (333)"
+]
+},
+  {
+  "scoreName": "problemsets",
+  "items": [
+  "ProblemSet 01 (444)",
+  "ProblemSet 02 (555)",
+  "ProblemSet 03 (666)"
+],
+  "drops": 1
+}
+],
+  "formulas": [
+  {
+  "id": "S1",
+  "formulaComps": [
+  {
+  "compName": "Final",
+  "component": {
+  "Value": "final exam"
+},
+  "weight": 0.25
+},
+  {
+  "compName": "Max midterm",
+  "component": {
+  "Max": [
+  "midterm1",
+  "midterm2"
+]
+},
+  "weight": 0.25
+},
+  {
+  "compName": "Min midterm",
+  "component": {
+  "Min": [
+  "midterm1",
+  "midterm2"
+]
+},
+  "weight": 0.25
+},
+  {
+  "compName": "HW",
+  "component": {
+  "Value": "problemsets"
+},
+  "weight": 0.25
+}
+]
+},
+  {
+  "id": "S2",
+  "formulaComps": [
+  {
+  "compName": "Final",
+  "component": {
+  "Value": "final exam"
+},
+  "weight": 0.35
+},
+  {
+  "compName": "Max midterm",
+  "component": {
+  "Max": [
+  "midterm1",
+  "midterm2"
+]
+},
+  "weight": 0.25
+},
+  {
+  "compName": "Min midterm",
+  "component": {
+  "Min": [
+  "midterm1",
+  "midterm2"
+]
+},
+  "weight": 0.15
+},
+  {
+  "compName": "HW",
+  "component": {
+  "Value": "problemsets"
+},
+  "weight": 0.25
+}
+]
+},
+  {
+  "id": "exception",
+  "formulaComps": [
+  {
+  "compName": "Final",
+  "component": {
+  "Value": "final exam"
+},
+  "weight": 0.5
+},
+  {
+  "compName": "Max midterm",
+  "component": {
+  "Max": [
+  "midterm1",
+  "midterm2"
+]
+},
+  "weight": 0.35
+},
+  {
+  "compName": "HW",
+  "component": {
+  "Value": "problemsets"
+},
+  "weight": 0.15
+}
+]
+}
+],
+  "exceptFormulas": [],
+  "grades": [
+  {
+  "MkGrade": {
+  "label": "A+",
+  "min": 98.0
+}
+},
+  {
+  "MkGrade": {
+  "label": "A",
+  "min": 92.5
+}
+},
+  {
+  "MkGrade": {
+  "label": "A-",
+  "min": 89.5
+}
+},
+  {
+  "MkGrade": {
+  "label": "B+",
+  "min": 86.5
+}
+},
+  {
+  "MkGrade": {
+  "label": "B",
+  "min": 82.5
+}
+},
+  {
+  "MkGrade": {
+  "label": "B-",
+  "min": 79.5
+}
+},
+  {
+  "MkGrade": {
+  "label": "C+",
+  "min": 76.5
+}
+},
+  {
+  "MkGrade": {
+  "label": "C",
+  "min": 72.5
+}
+},
+  {
+  "MkGrade": {
+  "label": "C-",
+  "min": 67.5
+}
+},
+  {
+  "MkGrade": {
+  "label": "D+",
+  "min": 65.5
+}
+},
+  {
+  "MkGrade": {
+  "label": "D",
+  "min": 51.5
+}
+},
+  {
+  "MkGrade": {
+  "label": "D-",
+  "min": 50.5
+}
+}
+],
+  "exceptions": []
+}

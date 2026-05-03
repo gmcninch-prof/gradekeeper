@@ -1,0 +1,4 @@
+ID,Private,Name,Location,Phone,Section,Email,Units,"Acad Level",Status,"Grade Basis","Program Descr",Plan(s),Foreign,"Advisor Name(s)","Class Description",Pronouns
+1234,N,"Brown, Penny",,999/999-9999,MATH-0051-01,Penny.Brown@faketufts.edu,4,Sophomore,Enrolled,Graded,"School of Engineering","Data Science (BSDS)",N,,"MATH-001: math on mars",
+1235,N,"Kirk, James",,999/999-9999,MATH-0051-01,James.Kirk@faketufts.edu,4,Sophomore,Enrolled,Graded,"School of Engineering","Mechanical Engineering (BSME)",N,,"MATH-001: math on mars",
+1236,N,"Lemon, Lisa",,999/999-9999,MATH-0051-01,Lisa.Lemon@faketufts.edu,4,Sophomore,Enrolled,Graded,"School of Engineering","Mechanical Engineering (BSME)",N,,"MATH-001: math on mars",

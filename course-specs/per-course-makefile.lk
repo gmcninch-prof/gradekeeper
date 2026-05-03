@@ -1,0 +1,90 @@
+# -*- mode: makefile -*-
+## Time-stamp: <2026-05-03 Sun 11:44 EDT - george@valhalla>
+##
+
+-include course.mk
+
+# installed via guix I hope
+SSCON         := ssconvert
+
+# should be in ~/.local/bin
+CONVERT       := grade-data.scm
+GK            := gradekeeper
+SPEC_CONVERT  := course-spec-to-json.scm
+
+
+ASSETS_DIR    ?= ../assets
+
+PD            := pandoc --standalone --from markdown  -V linkcolor:red --metadata-file=$(ASSETS_DIR)/metadata.yaml 
+
+# for hmtl output
+CSS_DEFAULT   := $(ASSETS_DIR)/default.css
+MJ            := https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js
+
+#--------------------------------------------------------------------------------
+
+GEN_DIR       := generated
+
+## Enrollment data from SIS, suffix xlsx
+ENROLL_XLS := $(shell ls *.xls *.xlsx 2>/dev/null | sort | tail -1)
+ENROLL_CSV := $(GEN_DIR)/$(shell basename "$(ENROLL_XLS)" | sed -E 's/\.xlsx?$$/.csv/')
+
+## grade data from Canvas, suffix .csv
+CANVAS_CSV    := $(shell ls *Grades*.csv 2>/dev/null | sort | tail -1)
+
+## specification file for course, suffix .scm
+COURSE_SPEC   := $(shell ls *.scm 2>/dev/null | sort | tail -1)
+
+## course spec document
+COURSE_SPEC_JSON := $(GEN_DIR)/$(COURSE_SPEC:.scm=.json)
+
+COURSE_DATA   := $(GEN_DIR)/score-data.json
+
+targets_md    := $(COURSE)-$(AY)-$(SEMESTER)--grade-report.md
+targets_html  := $(targets_md:.md=.html)
+targets_pdf   := $(targets_md:.md=.pdf)
+
+all:     convert scores html pdf
+
+convert: $(COURSE_SPEC_JSON) 
+scores:  $(targets_md)
+html:    $(targets_html)
+pdf:     $(targets_pdf)
+
+$(GEN_DIR):
+	mkdir -p $(GEN_DIR)
+
+$(ENROLL_CSV): $(ENROLL_XLS) | $(GEN_DIR)
+	$(SSCON) $< $@
+
+course.mk $(COURSE_SPEC_JSON): $(COURSE_SPEC) | $(GEN_DIR)
+	$(SPEC_CONVERT) $(COURSE_SPEC) --output $(COURSE_SPEC_JSON)
+
+$(COURSE_DATA): $(COURSE_SPEC_JSON) $(ENROLL_CSV) $(CANVAS_CSV) | $(GEN_DIR)
+	@unix2dos -q $(ENROLL_CSV)
+	@unix2dos -q $(CANVAS_CSV)
+	$(CONVERT) --enroll $(ENROLL_CSV) --course $(COURSE_SPEC_JSON) --canvas $(CANVAS_CSV) --output $(COURSE_DATA)
+
+$(targets_md): $(COURSE_SPEC) $(COURSE_DATA)
+	$(GK) --spec $(COURSE_SPEC_JSON) --data $(COURSE_DATA)
+
+
+
+%.html: %.md  
+	$(PD) $<  --css=$(CSS_DEFAULT) --mathjax=$(MJ) --to html  -o $@
+
+%.pdf: %.md  
+	$(PD) $<  --css=$(CSS_DEFAULT) --to pdf  -o $@
+
+.PHONY: all convert scores html pdf echoes clean clean_html clean_pdf clean_gen
+
+echoes:
+	@echo $(targets_md)
+	@echo $(targets_pdf)
+	@echo $(targets_html)
+	@echo JSON: $(COURSE_SPEC_JSON)
+
+
+clean:
+	-rm -f *--grade-report.md *--grade-report.html *--grade-report.pdf
+	-rm -rf generated/
