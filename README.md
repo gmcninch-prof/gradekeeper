@@ -45,7 +45,10 @@ Each course directory should contain:
   
 - a `scm` file course specification file.
 
-Examples of these files can be found in the `example` directory.
+Examples of these files can be found in the `example` directory.  If
+you clone the repository, install `gradekeeper` and the scheme scripts
+(via `make install`) you should be able to run `make` in the `example`
+sub-directory.  (see `Dependencies` below).
 
 ## Running the pipeline
 
